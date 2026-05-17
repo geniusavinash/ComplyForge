@@ -1,0 +1,52 @@
+# Phase 7 deliverable: sample HIGH_RISK ResumeRanker policy emitted by ComplyForge backend/scripts/print_sample_policy.py (mocked Gemini, real Lobster Trap schema).
+version: '1.0'
+policy_name: complyforge-resumeranker
+default_action: ALLOW
+ingress_rules:
+- name: prompt_injection_block
+  description: Injection attempt blocked under Article 15 cybersecurity controls;
+    logged for Article 12 record-keeping.
+  priority: 100
+  action: DENY
+  conditions:
+  - field: contains_injection_patterns
+    match_type: boolean
+    value: true
+  deny_message: '[ComplyForge] Blocked: prompt-injection signature (Article 15).'
+- name: decision_without_oversight_human_review
+  description: Shortlisting decisions affecting candidates need Article 14 human oversight
+    before being communicated externally.
+  priority: 80
+  action: HUMAN_REVIEW
+  conditions:
+  - field: contains_role_impersonation
+    match_type: boolean
+    value: true
+- name: rate_limit_unusual_surges
+  description: Unusual ingress surges throttled to satisfy Article 15 robustness and
+    Annex III(4) employment-use safeguards.
+  priority: 50
+  action: RATE_LIMIT
+  conditions:
+  - field: token_count
+    match_type: threshold
+    value: 1
+egress_rules:
+- name: pii_egress_human_review
+  description: PII detected on egress; Article 10 data governance and Article 14 oversight
+    require recruiter review prior to release.
+  priority: 90
+  action: HUMAN_REVIEW
+  conditions:
+  - field: contains_pii
+    match_type: boolean
+    value: true
+- name: comprehensive_logging
+  description: Full request/response logging satisfies Article 12 record-keeping and
+    Article 72 post-market monitoring.
+  priority: 10
+  action: LOG
+  conditions:
+  - field: token_count
+    match_type: threshold
+    value: 0

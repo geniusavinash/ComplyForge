@@ -1,0 +1,56 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+ENV/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Environment
+.env
+.env.local
+*.env
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+dist/
+.vite/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Project-specific
+backend/generated_pdfs/
+backend/audit_logs/
+lobstertrap/bin/
+lobstertrap/src/
+lobstertrap/*.log
+
+# Local-only build playbook (not part of the public submission)
+BUILD_BIBLE.md
+
+# IDE / agent memory
+.claude/
+.kiro/
+memory/
+
+# Demo artifacts (keep tracked deliberately in demo/output/)
+*.tmp

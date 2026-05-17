@@ -1,0 +1,137 @@
+[
+  {
+    "name": "ResumeRanker",
+    "purpose": "Score and shortlist inbound applicants against an open requisition by ranking resumes alongside a calibration set of historical successful hires.",
+    "domain": "Human Resources",
+    "inputs": [
+      "applicant_resume_pdf",
+      "job_description_text",
+      "calibration_set_of_prior_successful_hires"
+    ],
+    "outputs": [
+      "ranked_candidate_list",
+      "fit_score_per_candidate",
+      "shortlist_recommendation"
+    ],
+    "affects_humans": true,
+    "sample_prompts": [
+      "Rank the attached 80 resumes against the Senior Backend Engineer JD and return the top 12 with one-line justifications.",
+      "Compare this candidate's resume to the calibration set for our last three successful hires on the platform team and produce a fit score from 0 to 100.",
+      "For the shortlisted candidates, draft a one-paragraph summary the hiring manager can paste into the interview kit.",
+      "Re-rank the current shortlist if we relax the requirement for prior cloud experience.",
+      "Flag any resumes that do not meet the must-have criteria so the recruiter can decline them in the ATS."
+    ],
+    "tools": [
+      "ats_api",
+      "calendar",
+      "email_drafter"
+    ]
+  },
+  {
+    "name": "EmotionPulse",
+    "purpose": "Continuously infer the emotional state and engagement level of customer-support agents from their webcam and microphone feed during shifts and roll the signals up into per-agent mood scores and daily wellbeing reports for team leads.",
+    "domain": "Workplace Analytics",
+    "inputs": [
+      "agent_webcam_video_stream",
+      "agent_microphone_audio_stream",
+      "shift_schedule_metadata"
+    ],
+    "outputs": [
+      "per_agent_mood_score_per_minute",
+      "daily_wellbeing_report",
+      "team_lead_alert_when_agent_appears_distressed"
+    ],
+    "affects_humans": true,
+    "sample_prompts": [
+      "Show me the mood timeline for agent A1042 across yesterday's shift and highlight any periods classified as frustrated or disengaged.",
+      "Generate the weekly wellbeing report for the Tier-2 support pod and flag the three agents with the lowest average positivity score.",
+      "Send me an alert in real time whenever an agent's stress indicator stays above 0.7 for more than five minutes during a call.",
+      "Summarise which 1:1 coaching conversations to prioritise this week based on emotional engagement trends.",
+      "Compare team-level mood scores before and after the new shift policy rolled out two weeks ago."
+    ],
+    "tools": [
+      "video_ingest",
+      "hr_dashboard"
+    ]
+  },
+  {
+    "name": "CreditDecider",
+    "purpose": "Decide consumer loan applications for a retail bank by combining the applicant's submitted financials, the bureau report, and a parsed bank-statement summary, and return an approve or deny outcome with a rate band and machine-readable reason codes.",
+    "domain": "Financial Services",
+    "inputs": [
+      "applicant_financial_statement",
+      "credit_bureau_report",
+      "bank_statement_pdf_summary"
+    ],
+    "outputs": [
+      "approve_or_deny_decision",
+      "interest_rate_band",
+      "adverse_action_reason_codes"
+    ],
+    "affects_humans": true,
+    "sample_prompts": [
+      "Decision the attached loan application for a 36-month unsecured personal loan of 12,000 EUR and return the rate band and reason codes.",
+      "Re-run the decision on application LN-88421 using the corrected income figure of 4,200 EUR per month.",
+      "Explain in plain language the top three reason codes for the denial on application LN-88607 so I can read them back to the customer.",
+      "List the applications from this morning that the model wants to deny so a credit officer can review them before they are sent.",
+      "Compare the model's recommendation against the policy_db credit cutoff rules and flag any cases where they disagree."
+    ],
+    "tools": [
+      "bureau_api",
+      "ocr",
+      "policy_db"
+    ]
+  },
+  {
+    "name": "SupportBot",
+    "purpose": "Triage incoming Tier-1 customer support tickets in chat and email, resolve common questions from the knowledge base, and escalate anything ambiguous, sensitive, or out-of-policy to a human agent with a summary.",
+    "domain": "Customer Support",
+    "inputs": [
+      "customer_chat_message",
+      "customer_email_thread",
+      "ticket_metadata"
+    ],
+    "outputs": [
+      "drafted_reply_to_customer",
+      "ticket_category_and_priority",
+      "escalation_summary_for_human_agent"
+    ],
+    "affects_humans": true,
+    "sample_prompts": [
+      "Reply to the customer asking how to reset their password using the steps in our self-serve knowledge base.",
+      "Translate this incoming Spanish-language complaint into English and propose a draft response that follows the refund policy.",
+      "Categorise this ticket as billing, technical, or account, set a priority, and route it to the right queue.",
+      "Summarise the last twelve messages in this thread so the human agent who is taking over has the context.",
+      "If the customer is asking about a legal or medical topic, do not answer and escalate the ticket with a one-line reason."
+    ],
+    "tools": [
+      "kb_search",
+      "ticket_api",
+      "translate"
+    ]
+  },
+  {
+    "name": "RecipeBuddy",
+    "purpose": "Suggest recipes for the weekly team lunch from the office cafeteria's curated seasonal menu, taking into account dietary preferences the team has shared in advance.",
+    "domain": "Internal Tools",
+    "inputs": [
+      "team_dietary_preferences",
+      "curated_seasonal_menu",
+      "headcount_for_the_week"
+    ],
+    "outputs": [
+      "suggested_recipe_list",
+      "ingredient_quantities_for_headcount"
+    ],
+    "affects_humans": false,
+    "sample_prompts": [
+      "Suggest three vegetarian-friendly recipes from this week's seasonal menu for a team lunch of fourteen people.",
+      "Pick a pasta dish from the menu and scale the ingredient quantities for ten people.",
+      "Recommend a light option that works for the two team members who flagged a gluten-free preference.",
+      "Give me a one-pot recipe from the menu that we can prep in under thirty minutes."
+    ],
+    "tools": [
+      "menu_db"
+    ]
+  }
+]

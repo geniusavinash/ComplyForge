@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-bg-base text-text-main font-sans antialiased;
+  }
+}
+
+/* Subtle pulse used by stat-card increments on the Enforcement Log. */
+@keyframes stat-pulse {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-stat-pulse {
+  animation: stat-pulse 600ms ease-out;
+}
