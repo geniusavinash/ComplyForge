@@ -17,18 +17,26 @@ from __future__ import annotations
 
 import io
 import json
+import logging
 import os
+import tempfile
 import zipfile
 from pathlib import Path
 from typing import AsyncIterator
 
 import yaml
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import FileResponse, StreamingResponse
-from pydantic import BaseModel, Field
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
+from pydantic import BaseModel, Field, ValidationError
 
+from app.agents.critic import CriticAgent
 from app.agents.orchestrator import ComplianceOrchestrator, slug as slugify
+from app.agents.planner import PlannerAgent
+from app.config import get_settings
 from app.schemas import AgentDescriptor, ComplianceReport
+from app.services.gemini_client import build_gemini_schema
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api", tags=["analyze"])
 
@@ -48,8 +56,15 @@ DEFAULT_LOBSTERTRAP_POLICY_DIR = Path("..") / "lobstertrap" / "policies" / "agen
 # Dependency providers (overridable in tests)
 # ---------------------------------------------------------------------------
 def get_orchestrator() -> ComplianceOrchestrator:
-    """Default orchestrator dependency. Override via app.dependency_overrides."""
-    return ComplianceOrchestrator()
+    """Default orchestrator dependency. Override via app.dependency_overrides.
+
+    v0.3.0: wires PlannerAgent + CriticAgent so the live API exercises the
+    upgraded plan -> classify -> critique -> generate -> render pipeline.
+    """
+    return ComplianceOrchestrator(
+        planner=PlannerAgent(),
+        critic=CriticAgent(),
+    )
 
 
 def get_pdf_dir() -> Path:
@@ -135,6 +150,95 @@ async def list_sample_agents() -> list[dict]:
     if not isinstance(data, list):
         return []
     return data
+
+
+# ---------------------------------------------------------------------------
+# v0.3.0: multimodal AgentDescriptor extraction (Multimodal Intelligence track)
+# ---------------------------------------------------------------------------
+_MULTIMODAL_FALLBACK_MODEL = "gemini-2.5-flash"
+_EXTRACT_PROMPT = (
+    "Extract an AgentDescriptor JSON describing the AI system depicted in this "
+    "document. Required fields: name, purpose, domain, inputs, outputs, "
+    "affects_humans, sample_prompts (3-5 realistic strings), tools (list of "
+    "strings). Output strictly JSON matching the AgentDescriptor schema."
+)
+_SUPPORTED_EXTRACT_TYPES = {"image/png", "image/jpeg", "application/pdf"}
+
+
+def _multimodal_model_name() -> str:
+    name = get_settings().gemini_model or _MULTIMODAL_FALLBACK_MODEL
+    # gemini-2.5-flash-lite does not support multimodal inputs reliably;
+    # fall back to gemini-2.5-flash for image/PDF parts.
+    if "lite" in name.lower():
+        return _MULTIMODAL_FALLBACK_MODEL
+    return name
+
+
+def _extract_descriptor_sync(content: bytes, content_type: str) -> dict:
+    """Blocking helper for genai multimodal call; runs in a thread."""
+    import google.generativeai as genai  # local import keeps test isolation easy
+    from PIL import Image
+
+    model = genai.GenerativeModel(_multimodal_model_name())
+    generation_config = {
+        "response_mime_type": "application/json",
+        "response_schema": build_gemini_schema(AgentDescriptor),
+    }
+
+    if content_type.startswith("image/"):
+        image = Image.open(io.BytesIO(content))
+        parts = [_EXTRACT_PROMPT, image]
+    else:
+        # application/pdf — write to a temp file and upload to Gemini Files.
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as fh:
+            fh.write(content)
+            tmp_path = fh.name
+        uploaded = genai.upload_file(tmp_path, mime_type="application/pdf")
+        parts = [_EXTRACT_PROMPT, uploaded]
+
+    response = model.generate_content(parts, generation_config=generation_config)
+    text = getattr(response, "text", None) or ""
+    return json.loads(text)
+
+
+@router.post("/extract-descriptor")
+async def extract_descriptor(file: UploadFile = File(...)) -> JSONResponse:
+    """Multimodal: turn an uploaded image/PDF into an AgentDescriptor JSON."""
+    import asyncio  # local to keep header imports tidy
+
+    content_type = (file.content_type or "").lower()
+    if content_type not in _SUPPORTED_EXTRACT_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Unsupported file type {content_type!r}; expected one of "
+                f"{sorted(_SUPPORTED_EXTRACT_TYPES)}."
+            ),
+        )
+    try:
+        content = await file.read()
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=400, detail=f"Could not read upload: {exc}") from exc
+    if not content:
+        raise HTTPException(status_code=400, detail="Uploaded file is empty.")
+
+    try:
+        payload = await asyncio.to_thread(_extract_descriptor_sync, content, content_type)
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=400, detail=f"Gemini returned non-JSON: {exc}") from exc
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("extract-descriptor failed")
+        raise HTTPException(status_code=400, detail=f"Extraction failed: {exc}") from exc
+
+    try:
+        descriptor = AgentDescriptor.model_validate(payload)
+    except ValidationError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Extracted JSON did not match AgentDescriptor: {exc}",
+        ) from exc
+
+    return JSONResponse(content=descriptor.model_dump(mode="json"))
 
 
 # ---------------------------------------------------------------------------

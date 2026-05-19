@@ -36,7 +36,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(
     title="ComplyForge",
-    version="0.1.0",
+    version="0.3.0",
     lifespan=lifespan,
 )
 
@@ -56,9 +56,16 @@ app.include_router(enforcement_router.router)
 async def root() -> dict:
     return {
         "name": "ComplyForge",
-        "version": "0.1.0",
+        "version": "0.3.0",
         "status": "ready",
-        "agents": ["classifier", "doc_agent", "policy_agent"],
+        "agents": ["planner", "classifier", "critic", "doc_agent", "policy_agent"],
+        "capabilities": [
+            "multi_agent_pipeline",
+            "execution_planning",
+            "second_opinion_critique",
+            "multimodal_input",
+            "lobster_trap_enforcement",
+        ],
     }
 
 

@@ -69,33 +69,41 @@ Each cell is a tick or empty circle. Only the ComplyForge column is full.
 ## Slide 3: Solution / Architecture
 
 ### Headline
-An autonomous agent that reasons, plans, and executes — in 60 seconds.
+An autonomous agent that plans, reasons, critiques, and executes — in 60 seconds.
 
 ### Body bullets
-- Four artefacts per run: tier classification, Article 11 PDF plus FRIA, Lobster Trap YAML, audit log.
-- Single async pipeline; classifier first, then DocAgent and PolicyAgent in parallel; PDF rendered at the end.
-- Gemini 2.0 Flash for classification and structured documentation.
-- Veea Lobster Trap for live policy enforcement on the wire.
-- Locked at 1 plus 3 agents — not a 5-to-7 mesh.
+- Five specialised sub-agents: Planner, Classifier, Critic, Doc, Policy. All speak only to the Orchestrator — no inter-agent chains.
+- Plan first: PlannerAgent emits a four-step execution plan with dependency graph before any work runs. Visible in the dashboard.
+- Critic last: CriticAgent does a second-opinion review of the Classifier's tier before docs and policy are written.
+- Multimodal input: JSON, PNG, JPEG, or PDF — Gemini Vision extracts the AgentDescriptor when the input is visual.
+- Output: 13-page Article 11 PDF, Veea Lobster Trap YAML, JSONL audit trail.
 
 ### Speaker notes
-The architecture is deliberately small. One orchestrator. Three sub-agents.
-ClassifierAgent reads the agent descriptor and the full EU AI Act taxonomy
-and emits a tier with cited articles. DocAgent fans out ten concurrent
-Gemini calls, one per Article 11 section plus the FRIA, and assembles a
-multi-page PDF. PolicyAgent emits Veea Lobster Trap YAML in the real
-schema. The orchestrator runs DocAgent and PolicyAgent in parallel; the
-end-to-end pipeline finishes in a few seconds. We chose this shape on
-purpose: large agent meshes are in the trough of disillusionment because
-their error rates compound.
+ComplyForge is one orchestrator and five specialised sub-agents. Planner
+emits an explicit execution plan with dependencies — the operator sees the
+agent reason about what it is about to do, before any of it happens.
+ClassifierAgent reads the descriptor and the full EU AI Act taxonomy and
+emits a tier with cited articles. CriticAgent then runs an independent
+second-opinion review, surfaces concerns, and proposes a confidence delta;
+it cannot change the tier, only the orchestrator can. DocAgent fans out
+ten concurrent Gemini calls — nine Annex IV sections plus the Article 27
+FRIA — and assembles a multi-page PDF. PolicyAgent emits Veea Lobster Trap
+YAML in the real binary's schema. Doc and Policy run in parallel.
+End-to-end in seconds. Inputs can be JSON, an image, or a PDF — Gemini
+Vision handles the descriptor extraction. Five agents, but no chains: the
+dependency graph is a fan-in and fan-out, every decision routes through
+the Orchestrator's shared context.
 
 ### Visual
-Block diagram. Top: `AgentDescriptor` input. Middle: a single
-`ComplianceOrchestrator` box. Three branches below: `ClassifierAgent`,
-`DocAgent` (annotated "9 Article 11 sections + 1 FRIA, async.gather"), and
-`PolicyAgent` (annotated "Veea Lobster Trap YAML"). Bottom: four output
-tiles — Risk tier, Article 11 PDF, Policy YAML, Audit log. Sponsor
-logos for Google Gemini and Veea Lobster Trap on the side.
+Block diagram. Top: input box showing three icons — JSON, image, PDF — all
+flowing into `/api/extract-descriptor` (Gemini Vision) to produce an
+`AgentDescriptor`. Middle: a single `ComplianceOrchestrator` card. Five
+agent cards beneath in a fan layout: `PlannerAgent` (first), then
+`ClassifierAgent` -> `CriticAgent`, then `DocAgent` (annotated "9 Article
+11 sections + 1 FRIA, async.gather") and `PolicyAgent` (annotated "Veea
+Lobster Trap YAML") side by side. Bottom: four output tiles — Plan
+preview, Article 11 PDF, Policy YAML, Audit log. Sponsor logos for Google
+Gemini and Veea Lobster Trap on the side.
 
 ---
 
@@ -105,11 +113,11 @@ logos for Google Gemini and Veea Lobster Trap on the side.
 Solo build, sponsor-native, real engineering honesty.
 
 ### Body bullets
-- 94 passing tests (87 unit plus 7 new endpoint tests); 1 opt-in end-to-end test.
-- Verified Veea Lobster Trap schema differs from BUILD_BIBLE placeholder; patched in two hours and documented every field.
+- Full pytest suite green; opt-in end-to-end test runs against live services.
+- Verified Veea Lobster Trap schema by reading the binary's source; patched our PolicyAgent in one centralised helper and documented every field.
 - Lobster Trap binary has no hot reload; we surface `manual_restart_required` in the API response rather than fake one.
-- Two sponsor stacks, used as the manuals describe: Gemini for inference, Veea Lobster Trap MIT for enforcement.
-- 1 plus 3 agents, not 5 to 7. Smaller surface, fewer compounding errors.
+- Multimodal input: drop a model card PDF or a system-architecture PNG and Gemini Vision extracts the descriptor for you.
+- Five specialised sub-agents, fan-in / fan-out only — every decision routes through the Orchestrator's shared context.
 
 ### Speaker notes
 Two things matter here. First, every claim on this slide is on disk. We
@@ -137,11 +145,11 @@ fake what we cannot verify."** in `text-main`, centred.
 Watch high-risk to Article 11 to enforced to audited. Sixty seconds.
 
 ### Body bullets
-- Pick `ResumeRanker` from the seeded inventory.
-- Classifier returns HIGH_RISK with `Annex III(4)` employment cited.
-- DocAgent renders the Article 11 PDF and FRIA; PolicyAgent emits the 5-rule YAML.
-- Deploy writes the policy to disk; restart Lobster Trap with the new file.
-- Fire prompt-injection payload #2; proxy denies; audit log lights up.
+- Pick `ResumeRanker` or upload an HR-tool architecture diagram — same pipeline.
+- PlannerAgent emits a four-step plan, then ClassifierAgent returns HIGH_RISK with `Annex III(4)` cited.
+- CriticAgent reviews and agrees (or dissents — both rendered in the Reasoning Trace panel).
+- DocAgent renders the Article 11 + FRIA PDF; PolicyAgent emits the 5-rule Lobster Trap YAML.
+- Deploy writes the policy; restart Lobster Trap; fire prompt-injection payload — proxy denies; audit log lights up.
 - Ask: judges' vote, Veea Discord support, lablab community share.
 
 ### Speaker notes

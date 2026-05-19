@@ -126,6 +126,13 @@ export function deriveStats(state) {
     return t === 'high_risk' || t === 'prohibited'
   }).length
 
+  // Planner + Critic roll-ups (optional fields on ComplianceReport).
+  const reportsWithCritique = reports.filter((r) => r?.critique != null)
+  const criticDissents = reportsWithCritique.filter(
+    (r) => r.critique?.agreed === false,
+  ).length
+  const plansExecuted = reports.filter((r) => r?.plan != null).length
+
   return {
     agentsAnalyzed,
     highOrProhibitedCount,
@@ -134,5 +141,8 @@ export function deriveStats(state) {
     humanReviewQueued,
     rateLimited,
     totalEvents: (state.events || []).length,
+    criticDissents,
+    plansExecuted,
+    reportsWithCritiqueCount: reportsWithCritique.length,
   }
 }

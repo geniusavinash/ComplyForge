@@ -56,6 +56,46 @@ export function getPdfUrl(filename) {
 }
 
 /**
+ * POST /api/extract-descriptor (multipart)
+ *
+ * Accepts image/png, image/jpeg, or application/pdf and returns the
+ * AgentDescriptor JSON that Gemini Vision extracted from the document.
+ *
+ * @param {File} file
+ * @returns {Promise<object>} AgentDescriptor
+ */
+export async function extractDescriptor(file) {
+  if (!file) throw new Error('extractDescriptor: file is required')
+  const form = new FormData()
+  form.append('file', file, file.name || 'upload')
+
+  const response = await fetch(`${API_BASE_URL}/api/extract-descriptor`, {
+    method: 'POST',
+    body: form,
+  })
+
+  if (!response.ok) {
+    let detail = ''
+    try {
+      const body = await response.json()
+      detail = body?.detail || body?.error || ''
+    } catch {
+      try {
+        detail = await response.text()
+      } catch {
+        detail = ''
+      }
+    }
+    const suffix = detail ? ` — ${detail}` : ''
+    throw new Error(
+      `extract-descriptor failed: ${response.status} ${response.statusText}${suffix}`,
+    )
+  }
+
+  return response.json()
+}
+
+/**
  * Stream Server-Sent Events from POST /api/analyze/stream.
  *
  * EventSource cannot be used because it does not support POST bodies; we use

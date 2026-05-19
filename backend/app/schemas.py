@@ -52,12 +52,37 @@ class LobsterTrapPolicy(BaseModel):
     rules_count: int
 
 
+class ExecutionPlanStep(BaseModel):
+    """One step in the orchestrator's planned execution pipeline."""
+    id: str
+    description: str
+    expected_duration_seconds: float = Field(ge=0.0)
+    depends_on: list[str] = Field(default_factory=list)
+
+
+class ExecutionPlan(BaseModel):
+    """PlannerAgent output: a structured DAG describing the pipeline."""
+    pipeline: str
+    rationale: str
+    steps: list[ExecutionPlanStep]
+
+
+class CriticReview(BaseModel):
+    """CriticAgent output: a second-opinion review of the classifier's result."""
+    agreed: bool
+    confidence_delta: float = Field(ge=-1.0, le=1.0)
+    concerns: list[str] = Field(default_factory=list)
+    suggestion: str | None = None
+
+
 class ComplianceReport(BaseModel):
     agent: AgentDescriptor
     classification: ClassificationResult
     technical_file: TechnicalFile
     policy: LobsterTrapPolicy
     pdf_path: str | None = None
+    plan: ExecutionPlan | None = None
+    critique: CriticReview | None = None
 
 
 class EnforcementEvent(BaseModel):

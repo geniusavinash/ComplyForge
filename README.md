@@ -12,50 +12,57 @@ On **August 2, 2026**, the EU AI Act's high-risk system rules become binding. Pe
 
 ## The Autonomous Agent
 
-ComplyForge is an autonomous compliance agent. Provide an `AgentDescriptor` for any enterprise AI system and ComplyForge will:
+ComplyForge is an autonomous compliance agent. Provide an `AgentDescriptor` — or upload a model card PDF / architecture diagram and Gemini Vision will extract one — and ComplyForge will:
 
-1. **Reason** — Classify the system against the four EU AI Act risk tiers (Prohibited / High-Risk / Limited / Minimal), citing the exact Article 5, Annex III, or Article 50 anchor. Drops hallucinated citations against a real taxonomy whitelist. Applies the precautionary principle when confidence is low.
-2. **Plan** — The Orchestrator sequences a 12-step pipeline: gated classification first, then concurrent document and policy generation, then PDF render. Sub-agents internally fan out further (DocAgent runs 10 concurrent Gemini calls per Article 11 file).
-3. **Execute** — Generates a regulator-ready Article 11 technical file (9 sections per Annex IV) + Article 27 FRIA + datasheet as a 13-page PDF. Auto-generates a Veea Lobster Trap YAML policy that enforces Article 14 oversight, Article 15 injection blocks, Article 12 logging, and Article 10 PII gates.
-4. **Audit** — Every event lands in a JSONL audit log with the triggered rule, action, request snippet, and metadata — regulator-ready.
+1. **Plan** — A `PlannerAgent` emits an explicit four-step execution plan with rationale, expected durations, and a dependency graph. Visible in the dashboard before any execution starts.
+2. **Reason** — `ClassifierAgent` classifies the system against the four EU AI Act risk tiers (Prohibited / High-Risk / Limited / Minimal), citing the exact Article 5, Annex III, or Article 50 anchor. Drops hallucinated citations against a real taxonomy whitelist. Applies the precautionary principle when confidence is low.
+3. **Critique** — A `CriticAgent` runs an independent second-opinion review of the classification. Surfaces up to three concerns, proposes a confidence adjustment, and optionally suggests an alternative tier. Falls back gracefully if Gemini is unavailable.
+4. **Execute** — `DocAgent` and `PolicyAgent` run in parallel. DocAgent emits a 13-page regulator-ready Article 11 + FRIA + datasheet PDF (10 concurrent Gemini calls). PolicyAgent emits a Veea Lobster Trap YAML enforcing Article 14 oversight, Article 15 injection blocks, Article 12 logging, and Article 10 PII gates.
+5. **Audit** — Every runtime enforcement event lands in a JSONL audit log with the triggered rule, action, request snippet, and metadata — regulator-ready.
 
 ## Architecture — Agentic Workflow
 
 ```
-                  ┌──────────────────────────────────┐
-                  │       Enterprise AI agent        │
-                  └────────────────┬─────────────────┘
-                                   │ (proxied)
-                                   ▼
-                  ┌──────────────────────────────────┐
-                  │       Veea Lobster Trap          │ ◄── runtime enforcement
-                  └────────────────┬─────────────────┘
-                                   │
-                                   ▼
-              ┌──────────────────────────────────────────┐
-              │   ComplyForge Orchestrator (planner)     │
-              ├──────────────────────────────────────────┤
-              │  1. ClassifierAgent   → risk tier        │
-              │  2. DocAgent          → Article 11 + FRIA│  (concurrent)
-              │  3. PolicyAgent       → Lobster Trap YAML│  (concurrent)
-              │  4. PDFGenerator      → regulator PDF    │
-              └────────────────┬─────────────────────────┘
-                               │
-                               ▼
-              ┌──────────────────────────────────────────┐
-              │  Compliance Dashboard (React + Tailwind) │
-              │  Inventory · Heatmap · Docs · Audit Log  │
-              └──────────────────────────────────────────┘
+       ┌────────────────────────────────────────────────────┐
+       │  Input:  AgentDescriptor JSON   OR                 │
+       │          model-card PDF / diagram PNG              │
+       │          (Gemini Vision extracts the descriptor)   │
+       └─────────────────────────┬──────────────────────────┘
+                                 │
+                                 ▼
+          ┌────────────────────────────────────────────┐
+          │   ComplianceOrchestrator (state owner)     │
+          │                                            │
+          │   1. PlannerAgent     → ExecutionPlan      │
+          │   2. ClassifierAgent  → risk tier + cites  │
+          │   3. CriticAgent      → second-opinion     │
+          │   4a. DocAgent        ┐ in parallel        │
+          │   4b. PolicyAgent     ┘                    │
+          │   5. PDFGenerator     → regulator PDF      │
+          └────────────────┬───────────────────────────┘
+                           │
+                           ▼
+          ┌────────────────────────────────────────────┐
+          │   Veea Lobster Trap (real-time proxy)      │
+          │   enforces the generated YAML policy       │
+          └────────────────┬───────────────────────────┘
+                           │ JSONL audit events
+                           ▼
+          ┌────────────────────────────────────────────┐
+          │   Dashboard (React + Tailwind)             │
+          │   Plan preview · Reasoning trace · PDF     │
+          │   Inventory · Heatmap · Live audit log     │
+          └────────────────────────────────────────────┘
 ```
 
-**One orchestrator + three specialised sub-agents.** Architecture chosen against the published research showing structured small-team multi-agent designs outperform 5-7 agent meshes by roughly 17× on multi-step error rate.
+**One orchestrator owns all state; five specialised sub-agents speak only to the orchestrator, never to each other.** The Planner and Critic add reasoning depth without introducing inter-agent chains — the dependency graph stays a fan-in / fan-out, not a multi-hop chain. Research (Tran & Kiela 2024) shows error compounding kicks in when agents chain decisions sequentially without a coordinator; ComplyForge avoids that by routing every decision through the Orchestrator's shared classification context.
 
 ## Hackathon Theme Fit
 
-- **Agentic Workflows** — Orchestrator plans, sequences, and concurrently executes a 12-step pipeline.
-- **Intelligent Reasoning** — Classifier reasons about a system's purpose, validates citations against the real taxonomy, applies precautionary promotion under uncertainty.
-- **Enterprise Utility** — Solves the €35M EU AI Act compliance friction with regulator-ready outputs.
-- **Multimodal Output** — Emits three artefact modalities (PDF for regulators, YAML for the security proxy, JSONL for observability).
+- **Agentic Workflows** — PlannerAgent emits an explicit four-step plan with dependency graph; Orchestrator executes that plan with parallelism where the graph allows it.
+- **Intelligent Reasoning** — ClassifierAgent reasons about a system's purpose against the real EU AI Act taxonomy; CriticAgent runs an independent second-opinion review and surfaces concerns with a confidence delta. Hallucinated citations are silently dropped.
+- **Enterprise Utility** — Solves the €35M EU AI Act compliance friction with regulator-ready outputs in 60 seconds.
+- **Multimodal Intelligence** — Accepts JSON, image (PNG/JPEG), or PDF input through `POST /api/extract-descriptor` (Gemini Vision); emits three output modalities (PDF for regulators, YAML for the security proxy, JSONL for observability).
 
 ## Sponsor Tech
 

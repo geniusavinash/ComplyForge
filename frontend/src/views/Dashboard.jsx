@@ -1,5 +1,13 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowRight, Hourglass, ShieldAlert, ShieldCheck, Users } from 'lucide-react'
+import {
+  ArrowRight,
+  Brain,
+  GitBranch,
+  Hourglass,
+  ShieldAlert,
+  ShieldCheck,
+  Users,
+} from 'lucide-react'
 import RiskBadge from '../components/RiskBadge'
 import ActionChip from '../components/ActionChip'
 import { useInventory, deriveStats } from '../store/inventory'
@@ -108,6 +116,26 @@ export default function Dashboard() {
           Icon={ShieldCheck}
         />
       </section>
+
+      {(stats.reportsWithCritiqueCount > 0 || stats.plansExecuted > 0) && (
+        <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {stats.reportsWithCritiqueCount > 0 && (
+            <StatCard
+              label="Critic dissents"
+              value={stats.criticDissents}
+              Icon={Brain}
+              accent={stats.criticDissents > 0}
+            />
+          )}
+          {stats.plansExecuted > 0 && (
+            <StatCard
+              label="Plans executed"
+              value={stats.plansExecuted}
+              Icon={GitBranch}
+            />
+          )}
+        </section>
+      )}
 
       <CountdownCard />
 

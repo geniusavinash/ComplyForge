@@ -7,43 +7,49 @@
 ## At a glance
 
 ComplyForge is a four-component system: a Python backend that orchestrates
-three sub-agents against Google Gemini, a Veea Lobster Trap proxy that
-enforces the resulting policies on the wire, a webhook bridge that relays
-enforcement events back to the backend, and a React dashboard that
-surfaces everything. The pipeline runs end-to-end in a few seconds for
-HIGH_RISK agents.
+**five specialised sub-agents** against Google Gemini, a Veea Lobster Trap
+proxy that enforces the resulting policies on the wire, a webhook bridge
+that relays enforcement events back to the backend, and a React dashboard
+that surfaces everything — including the agent's own plan and reasoning
+trace. The pipeline runs end-to-end in a few seconds for HIGH_RISK agents.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                       Operator (browser)                            │
 │      React + Vite + Tailwind  ·  http://localhost:5173              │
-│   Dashboard · New Analysis · Inventory · Heatmap · Docs · Audit     │
+│  Dashboard · New Analysis (JSON / image / PDF input via Gemini      │
+│  Vision) · Inventory · Heatmap · Docs · Audit · Plan + Reasoning    │
 └─────────────┬───────────────────────────────────────┬───────────────┘
               │ POST /api/analyze (SSE)               │ GET /api/enforcement/events
+              │ POST /api/extract-descriptor (image/PDF → JSON)
               ▼                                       ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │            ComplyForge backend (FastAPI · :8000)                    │
 │                                                                     │
-│   ComplianceOrchestrator                                            │
-│       │  await classifier.classify(agent)                           │
-│       │                                                             │
-│       ├──┐  asyncio.gather(                                         │
-│       │  │      doc_agent.generate(agent, classification),          │
-│       │  │      policy_agent.generate(agent, classification))       │
-│       │  ▼                                                          │
-│       ▼                                                             │
-│   PDFGenerator → backend/generated_pdfs/<slug>.pdf                  │
+│   ComplianceOrchestrator   (shared classification context)          │
+│       1.  PlannerAgent     → ExecutionPlan (4 steps + deps graph)   │
+│       2.  ClassifierAgent  → ClassificationResult (tier + cites)    │
+│       3.  CriticAgent      → CriticReview (concerns + delta)        │
+│       4.  asyncio.gather(                                           │
+│              DocAgent.generate(agent, classification),              │
+│              PolicyAgent.generate(agent, classification))           │
+│       5.  PDFGenerator     → backend/generated_pdfs/<slug>.pdf      │
 │                                                                     │
 │   Routers                                                           │
-│       /api/analyze          (orchestrator entry)                    │
-│       /api/analyze/stream   (SSE: classify, docs, policy, pdf, done)│
-│       /api/sample-agents    (5 seeded enterprise agents)            │
-│       /api/pdf/{filename}   (binary PDF stream)                     │
-│       /api/deploy-policy/{slug} (writes ../lobstertrap/policies/    │
-│                                  agents/<slug>.yaml)                │
-│       /api/inventory/zip    (bundles PDF+JSON sidecars)             │
-│       /api/enforcement/event(POST: append to JSONL)                 │
-│       /api/enforcement/events?limit=N (read last N)                 │
+│       /api/analyze              (orchestrator entry)                │
+│       /api/analyze/stream       SSE: planning · classifying ·       │
+│                                 critiquing · generating_docs ·      │
+│                                 generating_policy · rendering_pdf · │
+│                                 done                                │
+│       /api/extract-descriptor   multipart: image/PNG, JPEG, or PDF  │
+│                                 Gemini Vision returns               │
+│                                 AgentDescriptor JSON                │
+│       /api/sample-agents        seeded enterprise agents            │
+│       /api/pdf/{filename}       binary PDF stream                   │
+│       /api/deploy-policy/{slug} writes ../lobstertrap/policies/...  │
+│       /api/inventory/zip        bundles PDF+JSON sidecars           │
+│       /api/enforcement/event    POST: append to JSONL               │
+│       /api/enforcement/events?limit=N    read last N                │
 └──────────────┬───────────────────────────────────┬──────────────────┘
                │ writes <slug>.yaml                │ reads
                ▼                                   ▼

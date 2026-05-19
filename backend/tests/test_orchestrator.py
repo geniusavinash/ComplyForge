@@ -23,12 +23,16 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from app.agents.orchestrator import ComplianceOrchestrator, slug
+from app.agents.planner import EXPECTED_STEP_IDS, PIPELINE_NAME
 from app.data.eu_ai_act_taxonomy import ARTICLE_11_SECTIONS
 from app.schemas import (
     AgentDescriptor,
     Article11Section,
     ClassificationResult,
     ComplianceReport,
+    CriticReview,
+    ExecutionPlan,
+    ExecutionPlanStep,
     LobsterTrapPolicy,
     RiskTier,
     TechnicalFile,
@@ -310,3 +314,187 @@ def test_constructor_falls_back_to_real_defaults_when_args_omitted() -> None:
     assert orch.doc_agent is not None
     assert orch.policy_agent is not None
     assert orch.pdf_generator is not None
+    # Planner/critic are OPT-IN; default None preserves v0.2.x behaviour.
+    assert orch.planner is None
+    assert orch.critic is None
+
+
+# ---------------------------------------------------------------------------
+# v0.3.0 planner + critic integration
+# ---------------------------------------------------------------------------
+def _canonical_plan() -> ExecutionPlan:
+    return ExecutionPlan(
+        pipeline=PIPELINE_NAME,
+        rationale="HR domain agent under EU AI Act Annex III(4); concurrency justified.",
+        steps=[
+            ExecutionPlanStep(
+                id=step_id,
+                description=f"Step {step_id}",
+                expected_duration_seconds=1.0,
+                depends_on=[] if i == 0 else [list(EXPECTED_STEP_IDS)[i - 1]],
+            )
+            for i, step_id in enumerate(EXPECTED_STEP_IDS)
+        ],
+    )
+
+
+def _build_planner_critic_mocks(
+    *,
+    call_order: list[str] | None = None,
+    plan: ExecutionPlan | None = None,
+    critique: CriticReview | None = None,
+) -> tuple[AsyncMock, AsyncMock]:
+    plan = plan or _canonical_plan()
+    critique = critique or CriticReview(
+        agreed=True,
+        confidence_delta=0.05,
+        concerns=[],
+        suggestion=None,
+    )
+
+    async def plan_side_effect(_a: AgentDescriptor) -> ExecutionPlan:
+        if call_order is not None:
+            call_order.append("plan_end")
+        return plan
+
+    async def review_side_effect(_a, _c) -> CriticReview:
+        if call_order is not None:
+            call_order.append("critique_end")
+        return critique
+
+    planner = AsyncMock()
+    planner.plan = AsyncMock(side_effect=plan_side_effect)
+
+    critic = AsyncMock()
+    critic.review = AsyncMock(side_effect=review_side_effect)
+
+    return planner, critic
+
+
+@pytest.fixture
+def orchestrator_with_planner_and_critic() -> tuple[
+    ComplianceOrchestrator, list[str]
+]:
+    """Build an orchestrator wired with mock planner + mock critic."""
+    call_order: list[str] = []
+    classifier, doc_agent, policy_agent, pdf_generator = _build_mocks(
+        call_order=call_order,
+    )
+    planner, critic = _build_planner_critic_mocks(call_order=call_order)
+    orch = ComplianceOrchestrator(
+        classifier=classifier,
+        doc_agent=doc_agent,
+        policy_agent=policy_agent,
+        pdf_generator=pdf_generator,
+        planner=planner,
+        critic=critic,
+    )
+    return orch, call_order
+
+
+def test_planning_event_fires_before_classifying(
+    orchestrator_with_planner_and_critic: tuple[ComplianceOrchestrator, list[str]],
+) -> None:
+    orch, _ = orchestrator_with_planner_and_critic
+
+    async def collect() -> list[dict]:
+        return [event async for event in orch.analyze_stream(_agent())]
+
+    events = asyncio.run(collect())
+    steps = [(e["step"], e["status"]) for e in events]
+
+    assert ("planning", "completed") in steps
+    plan_idx = steps.index(("planning", "completed"))
+    classify_idx = steps.index(("classifying", "started"))
+    assert plan_idx < classify_idx, steps
+
+    # Plan payload is included on the event.
+    plan_event = next(e for e in events if e["step"] == "planning")
+    assert plan_event["payload"]["pipeline"] == PIPELINE_NAME
+    assert [s["id"] for s in plan_event["payload"]["steps"]] == list(EXPECTED_STEP_IDS)
+
+
+def test_critiquing_event_fires_after_classifying_and_before_generating(
+    orchestrator_with_planner_and_critic: tuple[ComplianceOrchestrator, list[str]],
+) -> None:
+    orch, _ = orchestrator_with_planner_and_critic
+
+    async def collect() -> list[dict]:
+        return [event async for event in orch.analyze_stream(_agent())]
+
+    events = asyncio.run(collect())
+    steps = [(e["step"], e["status"]) for e in events]
+
+    assert ("critiquing", "completed") in steps
+    critique_idx = steps.index(("critiquing", "completed"))
+    classify_done_idx = steps.index(("classifying", "completed"))
+    docs_started_idx = steps.index(("generating_docs", "started"))
+    policy_started_idx = steps.index(("generating_policy", "started"))
+
+    assert classify_done_idx < critique_idx, steps
+    assert critique_idx < docs_started_idx, steps
+    assert critique_idx < policy_started_idx, steps
+
+
+def test_report_carries_plan_and_critique_when_agents_injected(
+    orchestrator_with_planner_and_critic: tuple[ComplianceOrchestrator, list[str]],
+) -> None:
+    orch, _ = orchestrator_with_planner_and_critic
+    report = asyncio.run(orch.analyze(_agent()))
+
+    assert report.plan is not None
+    assert report.plan.pipeline == PIPELINE_NAME
+    assert report.critique is not None
+    assert report.critique.agreed is True
+
+
+def test_disagreeing_critique_annotates_rationale_but_not_tier() -> None:
+    """Critic disagreement with delta <= -0.3 must append a rationale note."""
+    call_order: list[str] = []
+    classifier, doc_agent, policy_agent, pdf_generator = _build_mocks(
+        call_order=call_order,
+    )
+    planner, _ = _build_planner_critic_mocks(call_order=call_order)
+    critic = AsyncMock()
+    critic.review = AsyncMock(
+        return_value=CriticReview(
+            agreed=False,
+            confidence_delta=-0.5,
+            concerns=["Annex III(4) likely under-weighted"],
+            suggestion="Consider promoting to HIGH_RISK.",
+        ),
+    )
+    orch = ComplianceOrchestrator(
+        classifier=classifier,
+        doc_agent=doc_agent,
+        policy_agent=policy_agent,
+        pdf_generator=pdf_generator,
+        planner=planner,
+        critic=critic,
+    )
+    report = asyncio.run(orch.analyze(_agent()))
+
+    # Tier is unchanged — Critic doesn't have authority to override.
+    assert report.classification.tier == RiskTier.HIGH_RISK
+    # Rationale gets a critique annotation.
+    assert "CriticAgent flagged disagreement" in report.classification.rationale
+    assert "Annex III(4)" in report.classification.rationale
+
+
+def test_no_planning_or_critiquing_events_when_agents_omitted() -> None:
+    """Backwards-compat: default orchestrator emits the v0.2.x event sequence."""
+    classifier, doc_agent, policy_agent, pdf_generator = _build_mocks()
+    orch = ComplianceOrchestrator(
+        classifier=classifier,
+        doc_agent=doc_agent,
+        policy_agent=policy_agent,
+        pdf_generator=pdf_generator,
+    )
+
+    async def collect() -> list[dict]:
+        return [event async for event in orch.analyze_stream(_agent())]
+
+    events = asyncio.run(collect())
+    steps = {e["step"] for e in events}
+    assert "planning" not in steps
+    assert "critiquing" not in steps

@@ -17,13 +17,22 @@ import {
 } from 'lucide-react'
 import RiskBadge from '../components/RiskBadge'
 import StepProgress from '../components/StepProgress'
-import { deployPolicy, getSampleAgents, streamAnalyze } from '../api/client'
+import ReasoningTrace from '../components/ReasoningTrace'
+import PlanPreview from '../components/PlanPreview'
+import {
+  deployPolicy,
+  extractDescriptor,
+  getSampleAgents,
+  streamAnalyze,
+} from '../api/client'
 import { useInventory } from '../store/inventory'
 import { toast } from '../store/toasts'
 import { basename } from '../lib/format'
 
 const STEPS = [
+  { key: 'planning', label: 'Plan execution pipeline' },
   { key: 'classifying', label: 'Classify against EU AI Act' },
+  { key: 'critiquing', label: 'Critic review of classification' },
   { key: 'generating_docs', label: 'Generate Article 11 technical file' },
   { key: 'generating_policy', label: 'Generate Lobster Trap policy' },
   { key: 'rendering_pdf', label: 'Render PDF' },
@@ -69,7 +78,7 @@ export default function NewAnalysis() {
   const upsertReport = useInventory((s) => s.upsertReport)
 
   // Tabs
-  const [tab, setTab] = useState('samples') // 'samples' | 'upload'
+  const [tab, setTab] = useState('samples') // 'samples' | 'upload' | 'multimodal'
 
   // Sample agents
   const [samples, setSamples] = useState([])
@@ -124,12 +133,57 @@ export default function NewAnalysis() {
     multiple: false,
   })
 
+  // Multimodal upload (image/PDF -> Gemini Vision -> AgentDescriptor)
+  const [extracted, setExtracted] = useState(null)
+  const [extractError, setExtractError] = useState(null)
+  const [extracting, setExtracting] = useState(false)
+  const [lastUploadedFile, setLastUploadedFile] = useState(null)
+
+  const runExtract = async (file) => {
+    if (!file) return
+    setExtractError(null)
+    setExtracted(null)
+    setExtracting(true)
+    setLastUploadedFile(file)
+    try {
+      const descriptor = await extractDescriptor(file)
+      const v = validateDescriptor(descriptor)
+      if (!v.ok) {
+        setExtractError(v.error)
+        setExtracted(null)
+      } else {
+        setExtracted(v.value)
+        setSelectedName(null)
+        setUploaded(null)
+      }
+    } catch (err) {
+      setExtractError(err?.message || 'Failed to extract AgentDescriptor')
+      setExtracted(null)
+    } finally {
+      setExtracting(false)
+    }
+  }
+
+  const multimodalDropzone = useDropzone({
+    onDrop: (files) => {
+      const f = files?.[0]
+      if (f) runExtract(f)
+    },
+    accept: {
+      'image/png': ['.png'],
+      'image/jpeg': ['.jpg', '.jpeg'],
+      'application/pdf': ['.pdf'],
+    },
+    multiple: false,
+  })
+
   const [selectedName, setSelectedName] = useState(null)
 
   const selectedAgent = useMemo(() => {
     if (tab === 'upload') return uploaded
+    if (tab === 'multimodal') return extracted
     return samples.find((a) => a.name === selectedName) || null
-  }, [tab, samples, selectedName, uploaded])
+  }, [tab, samples, selectedName, uploaded, extracted])
 
   // Pipeline state
   const [running, setRunning] = useState(false)
@@ -211,12 +265,18 @@ export default function NewAnalysis() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* LEFT — input */}
         <section className="rounded-xl border border-border-soft bg-bg-panel p-5">
-          <div className="mb-4 flex gap-2">
+          <div className="mb-4 flex flex-wrap gap-2">
             <TabButton active={tab === 'samples'} onClick={() => setTab('samples')}>
               Sample agents
             </TabButton>
             <TabButton active={tab === 'upload'} onClick={() => setTab('upload')}>
               Upload JSON
+            </TabButton>
+            <TabButton
+              active={tab === 'multimodal'}
+              onClick={() => setTab('multimodal')}
+            >
+              Upload image/PDF
             </TabButton>
           </div>
 
@@ -288,6 +348,73 @@ export default function NewAnalysis() {
               {uploaded && (
                 <p className="mt-3 text-sm text-risk-minimal">
                   Loaded {uploaded.name}.
+                </p>
+              )}
+            </div>
+          )}
+
+          {tab === 'multimodal' && (
+            <div>
+              <div
+                {...multimodalDropzone.getRootProps()}
+                className={[
+                  'flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 text-center transition-colors',
+                  multimodalDropzone.isDragActive
+                    ? 'border-accent bg-accent/10'
+                    : 'border-border-soft bg-bg-base/40 hover:border-text-dim',
+                ].join(' ')}
+              >
+                <input {...multimodalDropzone.getInputProps()} />
+                {extracting ? (
+                  <>
+                    <Loader2
+                      className="animate-spin text-accent"
+                      size={28}
+                    />
+                    <div className="mt-2 text-sm text-text-main">
+                      Extracting AgentDescriptor...
+                    </div>
+                    <div className="text-xs text-text-dim">
+                      Gemini Vision is reading {lastUploadedFile?.name || 'your file'}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <UploadCloud className="text-text-dim" size={28} />
+                    <div className="mt-2 text-sm text-text-main">
+                      Drop a PNG, JPEG, or PDF here
+                    </div>
+                    <div className="text-xs text-text-dim">
+                      image/png · image/jpeg · application/pdf
+                    </div>
+                  </>
+                )}
+              </div>
+              <p className="mt-2 text-xs text-text-dim">
+                Drag a model card PDF, an architecture diagram PNG, or any
+                document that describes an AI system. Gemini Vision will
+                extract the AgentDescriptor.
+              </p>
+              {extractError && (
+                <div className="mt-3 rounded-lg border border-risk-prohibited/60 bg-risk-prohibited/15 p-3">
+                  <div className="text-sm font-medium text-risk-prohibited">
+                    {extractError}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (lastUploadedFile) runExtract(lastUploadedFile)
+                      else setExtractError(null)
+                    }}
+                    className="mt-2 inline-flex items-center gap-1 text-xs text-accent hover:underline"
+                  >
+                    <RotateCcw size={12} /> Try again
+                  </button>
+                </div>
+              )}
+              {extracted && !extractError && (
+                <p className="mt-3 text-sm text-risk-minimal">
+                  Extracted descriptor for {extracted.name}.
                 </p>
               )}
             </div>
@@ -487,6 +614,8 @@ function ReportPanel({ report }) {
 
   return (
     <div className="space-y-5">
+      {report.plan && <PlanPreview plan={report.plan} />}
+
       <div className="rounded-lg border border-border-soft bg-bg-base/40 p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -511,6 +640,16 @@ function ReportPanel({ report }) {
             />
           </div>
         </div>
+
+        {report.classification && (
+          <div className="mt-4">
+            <ReasoningTrace
+              classification={report.classification}
+              critique={report.critique || null}
+            />
+          </div>
+        )}
+
         {report.classification?.triggered_articles?.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-1">
             {report.classification.triggered_articles.map((a, i) => (
@@ -525,21 +664,15 @@ function ReportPanel({ report }) {
         )}
       </div>
 
-      <Collapsible title="Rationale">
-        <p className="text-sm leading-relaxed text-text-main">
-          {report.classification?.rationale || '—'}
-        </p>
-        {report.classification?.obligations?.length > 0 && (
-          <div className="mt-3">
-            <div className="text-xs uppercase tracking-wide text-text-dim">
-              Obligations
-            </div>
-            <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-text-main">
-              {report.classification.obligations.map((o, i) => (
-                <li key={i}>{o}</li>
-              ))}
-            </ul>
-          </div>
+      <Collapsible title="Obligations">
+        {report.classification?.obligations?.length > 0 ? (
+          <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-text-main">
+            {report.classification.obligations.map((o, i) => (
+              <li key={i}>{o}</li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-text-dim">No explicit obligations.</p>
         )}
       </Collapsible>
 

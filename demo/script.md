@@ -17,9 +17,9 @@ Segment-by-segment word counts (verified by `python`/`pwsh` count):
 ## 0:00–0:25 — Hook
 
 - TIME: 0:00–0:25
-- SHOT: Full-screen countdown card. Bold red "77 DAYS". Below in amber: "August 2, 2026 — EU AI Act high-risk obligations binding".
-- ON-SCREEN: `77 DAYS` · `August 2, 2026` · `Article 99: up to 35M EUR or 7% global revenue` · `50%+ of enterprises have no AI inventory`
-- NARRATOR: "August 2, 2026. The EU AI Act's high-risk rules become binding. 77 days from now. The fine for a prohibited practice is 35 million euros, or 7 percent of global revenue, whichever is higher. More than half of enterprises do not even have an AI inventory yet. That is the gap ComplyForge closes."
+- SHOT: Full-screen countdown card. Bold red "75 DAYS". Below in amber: "August 2, 2026 — EU AI Act high-risk obligations binding".
+- ON-SCREEN: `75 DAYS` · `August 2, 2026` · `Article 99: up to 35M EUR or 7% global revenue` · `50%+ of enterprises have no AI inventory`
+- NARRATOR: "August 2, 2026. The EU AI Act's high-risk rules become binding. 75 days from now. The fine for a prohibited practice is 35 million euros, or 7 percent of global revenue, whichever is higher. More than half of enterprises do not even have an AI inventory yet. That is the gap ComplyForge closes."
 - MUSIC: Neutral, low, building. No sting.
 
 ---
@@ -27,9 +27,9 @@ Segment-by-segment word counts (verified by `python`/`pwsh` count):
 ## 0:25–1:00 — Live walkthrough
 
 - TIME: 0:25–1:00
-- SHOT: Browser at `http://localhost:5173`, New Analysis view. Cursor picks the `ResumeRanker` sample card; ring-2 ring-accent appears. Click "Run Compliance Analysis". Right pane swaps to StepProgress; four steps tick through.
-- ON-SCREEN: `New Analysis → ResumeRanker (Human Resources)` · `Classify` · `Generate Article 11 file (10 parallel Gemini calls)` · `Generate Lobster Trap policy` · `Render PDF`. Banner snaps to `HIGH RISK`.
-- NARRATOR: "Pick a sample agent. ResumeRanker, an HR resume screener. Click Run. The orchestrator streams four steps. ClassifierAgent calls Gemini once and returns HIGH_RISK with Annex III(4) — employment — as the trigger. DocAgent fans out ten parallel Gemini calls, nine Article 11 sections plus the FRIA. PolicyAgent emits the Veea Lobster Trap YAML in the real schema. Then the PDF renders. The HIGH RISK banner snaps in."
+- SHOT: Browser at `http://localhost:5173`, New Analysis view. Cursor picks the `ResumeRanker` sample card; ring-2 ring-accent appears. Click "Run Compliance Analysis". Right pane swaps to PlanPreview + StepProgress; six steps tick through.
+- ON-SCREEN: `New Analysis → ResumeRanker (Human Resources)` · `Plan` · `Classify` · `Critique` · `Generate Article 11 file (10 parallel Gemini calls)` · `Generate Lobster Trap policy` · `Render PDF`. Banner snaps to `HIGH RISK`.
+- NARRATOR: "Pick a sample agent. ResumeRanker. Click Run. PlannerAgent emits the four-step plan with the dependency graph — the agent shows its work before doing the work. ClassifierAgent returns HIGH_RISK with Annex III(4) cited. CriticAgent agrees. DocAgent fans out ten parallel Gemini calls for the Article 11 file plus FRIA. PolicyAgent emits the Veea Lobster Trap YAML in the real schema. The PDF renders. The HIGH RISK banner snaps in."
 - MUSIC: Steady. Slight rise as the four steps complete.
 
 ---
@@ -58,6 +58,6 @@ Segment-by-segment word counts (verified by `python`/`pwsh` count):
 
 - TIME: 2:05–2:30
 - SHOT: Wide shot of the dashboard (Inventory plus Enforcement Log on screen). Lower-third reveals the credits.
-- ON-SCREEN: `Built on Google Gemini and Veea Lobster Trap (MIT)` · `94 passing tests · 1 opt-in e2e` · `Solo build · TechEx 2026` · `github.com/<user>/complyforge`
-- NARRATOR: "Built on Google Gemini and Veea Lobster Trap. 94 passing tests. One opt-in end-to-end. Solo build for TechEx 2026. ComplyForge. Compliance as a service, not a slide."
+- ON-SCREEN: `Built on Google Gemini and Veea Lobster Trap (MIT)` · `Five sub-agents, one orchestrator` · `Multimodal input (JSON, image, PDF)` · `AI Agent Olympics · Milan AI Week 2026` · `github.com/geniusavinash/ComplyForge`
+- NARRATOR: "Built on Google Gemini and Veea Lobster Trap. Five specialised sub-agents — Planner, Classifier, Critic, Doc, Policy — one orchestrator. JSON, image, or PDF input. AI Agent Olympics, Milan AI Week. ComplyForge. Compliance as a service, not a slide."
 - MUSIC: Resolve. Out clean at 2:30.

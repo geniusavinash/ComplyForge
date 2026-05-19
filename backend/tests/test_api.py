@@ -455,3 +455,126 @@ def test_inventory_zip_streams_pdf_and_json_members(client: TestClient) -> None:
     with zipfile.ZipFile(BytesIO(response.content)) as zf:
         names = sorted(zf.namelist())
     assert names == ["resumeranker.json", "resumeranker.pdf"]
+
+
+# ---------------------------------------------------------------------------
+# v0.3.0: POST /api/extract-descriptor (Multimodal Intelligence track)
+# ---------------------------------------------------------------------------
+from app.routers import analyze as analyze_router  # noqa: E402
+
+
+def _png_bytes() -> bytes:
+    """Return the bytes of a 1x1 white PNG (no Pillow needed by callers)."""
+    return bytes.fromhex(
+        "89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c489"
+        "0000000d49444154789c63f8ffff3f0005fe02fea7c6e9930000000049454e44ae"
+        "426082"
+    )
+
+
+def _canned_descriptor_dict() -> dict:
+    return {
+        "name": "ContractReviewer",
+        "purpose": "Review and flag risky clauses in vendor contracts",
+        "domain": "legal",
+        "inputs": ["contract_text"],
+        "outputs": ["risk_flags", "summary"],
+        "affects_humans": True,
+        "sample_prompts": [
+            "Flag any auto-renewal clauses in this MSA.",
+            "Summarise indemnity exposure in plain English.",
+            "List GDPR data-processing obligations triggered.",
+        ],
+        "tools": ["pdf_reader", "diff_tool"],
+    }
+
+
+def test_extract_descriptor_returns_valid_agent_descriptor(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Multimodal endpoint returns an AgentDescriptor when Gemini is mocked."""
+    captured: dict = {}
+
+    def fake_extract(content: bytes, content_type: str) -> dict:
+        captured["content_type"] = content_type
+        captured["bytes_len"] = len(content)
+        return _canned_descriptor_dict()
+
+    monkeypatch.setattr(analyze_router, "_extract_descriptor_sync", fake_extract)
+
+    response = client.post(
+        "/api/extract-descriptor",
+        files={"file": ("agent.png", _png_bytes(), "image/png")},
+    )
+    assert response.status_code == 200, response.text
+    body = response.json()
+    parsed = AgentDescriptor.model_validate(body)
+    assert parsed.name == "ContractReviewer"
+    assert parsed.domain == "legal"
+    assert len(parsed.sample_prompts) >= 3
+    assert captured["content_type"] == "image/png"
+    assert captured["bytes_len"] == len(_png_bytes())
+
+
+def test_extract_descriptor_rejects_unsupported_file_type(
+    client: TestClient,
+) -> None:
+    """Endpoint must return 400 for content types outside the allowed set."""
+    response = client.post(
+        "/api/extract-descriptor",
+        files={"file": ("readme.txt", b"hello world", "text/plain")},
+    )
+    assert response.status_code == 400
+    assert "Unsupported file type" in response.json()["detail"]
+
+
+def test_extract_descriptor_supports_pdf_upload(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """PDF content type takes the upload_file path (mocked here)."""
+    def fake_extract(content: bytes, content_type: str) -> dict:
+        assert content_type == "application/pdf"
+        return _canned_descriptor_dict()
+
+    monkeypatch.setattr(analyze_router, "_extract_descriptor_sync", fake_extract)
+
+    response = client.post(
+        "/api/extract-descriptor",
+        files={"file": ("agent.pdf", b"%PDF-1.4 fake", "application/pdf")},
+    )
+    assert response.status_code == 200
+    AgentDescriptor.model_validate(response.json())
+
+
+def test_extract_descriptor_returns_400_when_extraction_fails(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Any exception from the extractor surfaces as a 400 with a useful detail."""
+    def fake_extract(content: bytes, content_type: str) -> dict:
+        raise RuntimeError("Gemini outage")
+
+    monkeypatch.setattr(analyze_router, "_extract_descriptor_sync", fake_extract)
+
+    response = client.post(
+        "/api/extract-descriptor",
+        files={"file": ("agent.png", _png_bytes(), "image/png")},
+    )
+    assert response.status_code == 400
+    assert "Extraction failed" in response.json()["detail"]
+
+
+def test_extract_descriptor_rejects_invalid_descriptor_json(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """If Gemini returns valid JSON that fails AgentDescriptor validation -> 400."""
+    def fake_extract(content: bytes, content_type: str) -> dict:
+        return {"unexpected": "shape"}
+
+    monkeypatch.setattr(analyze_router, "_extract_descriptor_sync", fake_extract)
+
+    response = client.post(
+        "/api/extract-descriptor",
+        files={"file": ("agent.png", _png_bytes(), "image/png")},
+    )
+    assert response.status_code == 400
+    assert "AgentDescriptor" in response.json()["detail"]

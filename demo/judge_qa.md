@@ -8,14 +8,15 @@ calm confidence, no overclaiming.
 
 ## Q1. Isn't this just another Gemini wrapper?
 
-No. ComplyForge is one orchestrator and three sub-agents, locked.
-DocAgent fans out ten concurrent Gemini calls — nine Annex IV sections
-plus the Article 27 FRIA — using `asyncio.gather`. PolicyAgent emits Veea
-Lobster Trap YAML in the verified real schema (we patched after reading
-the loader source). The output is a regulator-shaped Article 11 PDF, an
-enforced policy on the wire, and an audit log. None of those are chatbot
-turns. A wrapper does not produce a 13-page PDF and a denied request in
-the same run.
+No. ComplyForge is one orchestrator and five specialised sub-agents.
+PlannerAgent emits an explicit four-step plan before execution starts.
+ClassifierAgent reasons against the real EU AI Act taxonomy. CriticAgent
+runs an independent second-opinion review. DocAgent fans out ten
+concurrent Gemini calls. PolicyAgent emits Veea Lobster Trap YAML in the
+verified real schema. Inputs can be JSON, an image, or a PDF — Gemini
+Vision extracts the descriptor. A wrapper does not plan, critique itself,
+or produce a 13-page Annex IV PDF plus an enforced policy in the same
+run.
 
 ---
 
@@ -97,11 +98,39 @@ after discovering the schema was wrong.
 
 ## Q8. Solo build — can you actually maintain this?
 
-94 passing tests give regression protection. Architecture is locked at
-one orchestrator plus three sub-agents — no expansion. The single
-touch-point for Veea schema drift is `_rule()` plus `_cond()` in
+A full pytest suite gives regression protection. Architecture is locked
+at one orchestrator plus five sub-agents — no expansion beyond that. The
+single touch-point for Veea schema drift is `_rule()` plus `_cond()` in
 `policy_generator.py`; we already proved that helper handles a real
 schema change in one commit. The frontend has a static class lookup so
 the JIT scanner cannot drift. The codebase is small on purpose. If a
 contributor shows up, the surface area is friendly. If not, I can hold
 this stack alone.
+
+---
+
+## Q9. Five sub-agents — isn't that the agent mesh you warned against?
+
+No. The published research on error compounding (Tran and Kiela 2024)
+fingers sequential agent chains where each agent makes a decision off
+another agent's output without a coordinator. ComplyForge's five sub-agents
+all speak only to the Orchestrator, which owns the shared classification
+context. The dependency graph is fan-in and fan-out, not a chain.
+PlannerAgent reads the descriptor, CriticAgent reads classification — but
+neither feeds another agent. Doc and Policy run in parallel off the same
+classification. The Orchestrator is the only state owner. Different shape,
+different failure mode.
+
+---
+
+## Q10. Multimodal input — is that just a wrapper around Gemini Vision?
+
+Gemini Vision does OCR. ComplyForge does schema extraction. POST
+`/api/extract-descriptor` takes a PNG, JPEG, or PDF and asks Gemini Vision
+to return strictly AgentDescriptor-shaped JSON — name, purpose, domain,
+inputs, outputs, affects_humans, sample_prompts, tools. The structured
+schema is enforced through our build_gemini_schema helper that strips
+JSON-schema fields Gemini's proto rejects. The output flows straight into
+the same Orchestrator pipeline. The value is the closed loop: a model card
+PDF becomes a regulator-ready Article 11 PDF and an enforced Lobster Trap
+policy in 60 seconds. No copy-paste.
