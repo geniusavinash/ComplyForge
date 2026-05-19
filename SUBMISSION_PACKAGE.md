@@ -1,133 +1,173 @@
 # ComplyForge — Submission Package
 
-Final lablab.ai team-page checklist plus ready-to-paste content. Replace
-every `{{...}}` placeholder before submitting; `scripts/prepare_release.ps1`
-will list every remaining placeholder with file:line so nothing slips.
+Paste-ready lablab.ai team-page content for the **AI Agent Olympics @ Milan AI Week 2026** hackathon.
 
 ---
 
 ## Team-page fields (copy-paste ready)
 
-**Project name**
+**Team name** (max 45 chars)
 
 ```
 ComplyForge
 ```
 
-**Tagline (≤120 chars)**
+**Team description** (max 150 chars)
 
 ```
-EU AI Act Article 11 Compliance Co-Pilot. Auto-generates technical files + FRIA + Lobster Trap policies in 60s.
+EU AI Act Article 11 compliance in 60 seconds — auto-generates technical files, FRIA, and Veea Lobster Trap policies.
 ```
 
-**Long description**
+**Looking for team members?** — `OFF`
 
-Paste the **Problem**, **Solution**, and **Architecture** sections from
-`README.md` verbatim. lablab.ai supports Markdown, so the headings, ASCII
-diagram, and bullet lists render as-is.
+**Timezone** — `Asia/Kolkata` (UTC +5:30)
 
-**Team members**
+---
 
-- Avinash Kumar (solo) — `avinashkumarstm248@gmail.com`
+## Submission fields
 
-**Tech tags**
+**Submission Title** (max 50 chars)
 
 ```
-FastAPI, React, Vite, Tailwind, Google Gemini, Veea Lobster Trap,
-Pydantic v2, Pytest, EU AI Act, Article 11, FRIA, Annex IV, Annex III
+ComplyForge — Autonomous EU AI Act Compliance Agent
 ```
+
+**Short Description** (max 255 chars)
+
+```
+ComplyForge is an autonomous compliance agent that reasons about EU AI Act risk, plans a 12-step pipeline, and executes — classifying enterprise AI, generating Article 11 + FRIA documents, and deploying enforced Veea Lobster Trap policies. All in 60 seconds.
+```
+
+**Long Description** (paste verbatim)
+
+```
+ComplyForge — Autonomous EU AI Act Compliance Agent
+
+PROBLEM
+On August 2, 2026, the EU AI Act's high-risk system rules become binding. Penalties reach €35M or 7% of global revenue. Over half of enterprises have no AI inventory, no Article 11 technical file, and no Fundamental Rights Impact Assessment (FRIA). Compliance teams are 75 days from a deadline they cannot meet manually.
+
+AUTONOMOUS AGENT DESIGN
+ComplyForge is an autonomous compliance agent built around one Orchestrator and three specialised sub-agents:
+
+1. ClassifierAgent — reasons about an AI system's purpose against the full EU AI Act taxonomy (Article 5 prohibited categories, Annex III high-risk domains, Article 50 transparency triggers). Drops hallucinated citations against a whitelist, applies the precautionary principle when confidence is low (auto-promotes to HIGH_RISK rather than weakening a compliance posture).
+
+2. DocAgent — plans a 10-step concurrent document generation across the nine Annex IV sections plus the Article 27 FRIA. Auto-corrects if the underlying model returns the wrong section count. Generates a 13-page regulator-ready PDF.
+
+3. PolicyAgent — generates a Veea Lobster Trap YAML policy that enforces classification at runtime. Falls back to deterministic reasons if the LLM is unavailable, and is hard-locked to the eight documented Lobster Trap actions — never invents undocumented actions.
+
+The Orchestrator plans the pipeline, executes classification first (gating step), then runs document and policy generation concurrently, then renders the regulator-ready PDF. End-to-end in 60 seconds.
+
+REASONING + ROADBLOCKS
+The Classifier validates every cited article against the taxonomy whitelist — fabricated references like "Article 999" or "GDPR Article 22" are silently dropped with a warning. When confidence drops below 0.5 and the tier isn't already PROHIBITED, the system auto-promotes to HIGH_RISK rather than weakening a compliance posture. The Veea Lobster Trap binary has no hot reload (verified by reading serve.go and handler.go); ComplyForge's deploy endpoint returns manual_restart_required honestly rather than fake a reload, with restart instructions surfaced in the dashboard.
+
+ENTERPRISE UTILITY
+Output is a 13-page regulator-ready PDF (Article 11 technical file + FRIA + datasheet) plus a deployable Veea Lobster Trap YAML that actively blocks PII egress, prompt injection, and decisions without Article 14 human oversight. The audit log is structured JSONL — drop into any SIEM.
+
+MULTIMODAL OUTPUT
+ComplyForge emits three artefact modalities from a single AgentDescriptor input: a PDF technical file for regulators, a YAML enforcement policy for the security proxy, and JSONL audit events for observability stacks.
+
+TECH STACK
+Backend: Python 3.14, FastAPI, Pydantic v2, Google Gemini, ReportLab.
+Frontend: React + Vite + TailwindCSS + recharts + zustand.
+Sponsor tech: Veea Lobster Trap (MIT, Go binary), Google Gemini.
+Testing: 94 unit tests + 7 endpoint tests passing, 1 opt-in end-to-end integration test.
+Architecture: one orchestrator plus three sub-agents (research-backed against 5-7 agent meshes).
+
+Built solo in under 48 hours. Open source under MIT. Repository: https://github.com/geniusavinash/ComplyForge
+```
+
+---
+
+## Categories (multi-select, pick 3-5)
+
+```
+Security
+Enterprise
+Compliance
+AI
+Assistant
+```
+
+## Event Tracks (pick all that apply)
+
+```
+Agentic Workflows
+Enterprise Utility
+Intelligent Reasoning
+Multimodal Intelligence
+```
+
+## Technologies Used (paste these tags)
+
+```
+Google Gemini
+AI Studio
+Lobster Trap
+FastAPI
+Python
+React
+TailwindCSS
+Vite
+Pydantic
+pytest
+ReportLab
+```
+
+---
+
+## URLs
 
 **GitHub repo URL**
-
 ```
-https://github.com/geniusavinash/complyforge
-```
-
-(Repository must be **public** before the deadline. The MIT LICENSE in
-the repo root will surface in GitHub's sidebar.)
-
-**Demo video URL**
-
-```
-https://youtu.be/{{YOUTUBE_VIDEO_ID}}
+https://github.com/geniusavinash/ComplyForge
 ```
 
-(Unlisted YouTube. Recorded against `demo/script.md` — 2:30 hard cap.)
+**Demo video URL** — to be uploaded after recording (YouTube unlisted or Loom share link)
+
+```
+{{YOUTUBE_VIDEO_ID_OR_LOOM_LINK}}
+```
 
 **Live demo URL**
-
 ```
-Run locally — see README "Quick Start". No hosted instance.
+Run locally — see README Quick Start. No hosted instance (deliberate: every demo runs against the deployer's own Gemini key, audit log stays local).
 ```
 
-**Pitch deck link**
+---
 
-Either link to `demo/pitch_deck.md` in the repo (renders as-is on
-GitHub), or export the five slides to Google Slides / Pitch.com and paste
-that URL.
+## Media uploads
+
+| Field | File path | Status |
+|-------|-----------|--------|
+| Cover image | `demo/cover_image.png` | Generated 1920×1080 |
+| Video presentation | record + upload via Loom or YouTube | **TODO by user** |
+| Slide presentation | `demo/pitch_deck.pdf` | Generated |
 
 ---
 
 ## Pre-flight checklist
 
-Tick every box before you submit. `scripts/prepare_release.ps1` runs the
-machine-checkable items automatically.
+Tick every box before final submit:
 
-- [ ] All 94 unit tests + 7 endpoint tests pass:
-      `cd backend; python -m pytest tests/ -v -m "not e2e"`
-- [ ] e2e test passes locally with `GEMINI_API_KEY` set:
-      `cd backend; python -m pytest tests/ -v -m e2e`
-- [ ] Frontend builds clean: `cd frontend; npm run build`
-- [ ] `demo/run_demo.ps1` boots all four services and opens the browser
-- [ ] `demo/fire_attack.ps1 -Index 2` produces a visible DENY plus a new
-      event in the dashboard's Enforcement Log
-- [ ] At least 5 PDFs render under `backend/generated_pdfs/` after
-      `scripts/seed_inventory.py`
-- [ ] The HIGH_RISK ResumeRanker PDF opens; cover banner is orange; nine
-      Article 11 sections present; FRIA section present; footer reads
-      "Not legal advice | Article 11 + Annex IV mapping"
-- [ ] Demo video recorded against `demo/script.md`, under 3 minutes,
-      uploaded to YouTube unlisted, ID captured
-- [ ] GitHub repo is **public**, README renders, LICENSE shows in sidebar
-- [ ] `lablab.ai` team page populated with every field above
-- [ ] (Optional) Posted in lablab Discord `#showcase` channel
+- [x] All 94 unit tests + 7 endpoint tests pass
+- [x] Frontend builds clean
+- [x] Lobster Trap binary builds and inspects policies correctly
+- [x] At least 1 sample agent (RecipeBuddy or ResumeRanker) analyzed end-to-end against live Gemini
+- [x] HIGH_RISK PDF (ResumeRanker) opens — orange banner, 9 Article 11 sections, FRIA, footer disclaimer
+- [x] GitHub repo public, README renders, LICENSE shows
+- [x] Cover image generated
+- [x] Pitch deck PDF generated
+- [ ] Demo video recorded + uploaded
+- [ ] lablab.ai team page populated
+- [ ] Final submit clicked before deadline
 
 ---
 
 ## Manual steps still required
 
-These are human tasks. ComplyForge will not perform them.
-
-1. Create the GitHub repo at `github.com/geniusavinash/complyforge` —
-   set visibility to **Public**.
-2. From the workspace root:
-   ```powershell
-   git init
-   git add -A
-   git commit -m "ComplyForge — TechEx 2026 hackathon submission"
-   ```
-3. Add the remote and push:
-   ```powershell
-   git remote add origin https://github.com/geniusavinash/complyforge.git
-   git push -u origin main
-   ```
-4. Tag a release:
-   ```powershell
-   git tag v0.1.0
-   git push --tags
-   ```
-5. Record the demo video using `demo/script.md` (one take or stitched).
-   Upload to YouTube as **Unlisted**.
-6. Replace `{{YOUTUBE_VIDEO_ID}}` in this file with the real ID.
-7. Replace `geniusavinash` everywhere it appears. Use:
-   ```powershell
-   Get-ChildItem -Recurse -File | Select-String -Pattern '\{\{GITHUB_USERNAME\}\}|\{\{LABLAB_TEAM_NAME\}\}|\{\{YOUTUBE_VIDEO_ID\}\}'
-   ```
-   `scripts/prepare_release.ps1` does the same scan and reports
-   `file:line` for each remaining placeholder.
-8. Replace `{{LABLAB_TEAM_NAME}}` in any docs that reference it.
-9. Paste the team-page fields into:
-   ```
-   https://lablab.ai/ai-hackathons/techex-intelligent-enterprise-solutions-hackathon/{{LABLAB_TEAM_NAME}}
-   ```
-10. Submit before **2026-05-19** (lablab deadline).
+1. Record demo video (2:30) — use `demo/script.md` as the narration guide.
+2. Upload video to Loom (https://www.loom.com) or YouTube (unlisted) — paste the link.
+3. Open lablab.ai team page for the AI Agent Olympics hackathon.
+4. Paste the team-page + submission fields above.
+5. Upload `demo/cover_image.png` and `demo/pitch_deck.pdf`.
+6. Click submit. Verify confirmation.

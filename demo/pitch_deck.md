@@ -1,8 +1,8 @@
 # ComplyForge — Pitch Deck
 
-Solo build for the lablab.ai TechEx 2026 hackathon. Five slides, Sequoia
-format. Speaker notes are written for reading aloud in 30–60 seconds at a
-natural ~150 words per minute.
+Solo build for the lablab.ai **AI Agent Olympics @ Milan AI Week 2026**
+hackathon. Five slides, Sequoia format. Speaker notes are written for
+reading aloud in 30–60 seconds at a natural ~150 words per minute.
 
 ---
 
@@ -15,11 +15,11 @@ On August 2, 2026, the EU AI Act's high-risk rules become binding.
 - Penalty for prohibited practices: 35 million EUR or 7 percent global revenue, whichever is higher.
 - Other high-risk violations: 15 million EUR or 3 percent.
 - 50 percent of enterprises still have no AI inventory.
-- 77 days remain. Article 11 technical files are not optional.
+- 75 days remain. Article 11 technical files are not optional.
 - Being caught flat-footed is a budget event, not a fine line item.
 
 ### Speaker notes
-Today is May 17, 2026. In 77 days, on August 2, the EU AI Act's high-risk
+Today is May 19, 2026. In 75 days, on August 2, the EU AI Act's high-risk
 system rules become legally binding across the European Union. Article 99
 sets the ceiling at 35 million euros or 7 percent of global revenue for
 prohibited practices, and 15 million or 3 percent for other high-risk
@@ -30,7 +30,7 @@ an Article 11 technical file for a system they have not catalogued. That
 is the gap ComplyForge closes.
 
 ### Visual
-Full-bleed countdown bar in `risk-prohibited` red. Centered text: **77 DAYS**
+Full-bleed countdown bar in `risk-prohibited` red. Centered text: **75 DAYS**
 on the first line, **August 2, 2026** on the second, in `accent` amber.
 Sub-line in `text-dim`: "EU AI Act Article 6 + Annex III obligations binding".
 
@@ -69,7 +69,7 @@ Each cell is a tick or empty circle. Only the ComplyForge column is full.
 ## Slide 3: Solution / Architecture
 
 ### Headline
-One orchestrator, three sub-agents, one regulator-ready output.
+An autonomous agent that reasons, plans, and executes — in 60 seconds.
 
 ### Body bullets
 - Four artefacts per run: tier classification, Article 11 PDF plus FRIA, Lobster Trap YAML, audit log.
