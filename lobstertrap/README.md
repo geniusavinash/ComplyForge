@@ -1,4 +1,4 @@
-# ComplyForge ↔ Veea Lobster Trap (Phase 7)
+# ComplyForge ↔ Veea Lobster Trap (the Lobster Trap integration step)
 
 Built on **Veea Lobster Trap (MIT)** — https://github.com/veeainc/lobstertrap
 
@@ -15,7 +15,7 @@ risk classification into live enforcement.
 ```
 lobstertrap/
 ├── README.md            ← this file
-├── SCHEMA_NOTES.md      ← Phase 7 reality-check log + schema diff
+├── SCHEMA_NOTES.md      ← the Lobster Trap integration step reality-check log + schema diff
 ├── setup.ps1            ← clone + build + verify the real binary
 ├── policies/
 │   ├── default.yaml             ← hand-written ComplyForge baseline policy
@@ -74,7 +74,7 @@ $env:LOBSTERTRAP_EVENT_SOURCE = 'http://localhost:8080'
 ..\backend\.venv\Scripts\python.exe webhook_bridge.py
 ```
 
-Real CLI flags from the upstream `cmd/serve.go`, all verified during Phase 7:
+Real CLI flags from the upstream `cmd/serve.go`, all verified during the Lobster Trap integration step:
 
 | Flag | Default | Purpose |
 | --- | --- | --- |
@@ -107,10 +107,12 @@ ingress_rules:
 egress_rules: [ ...same shape... ]
 ```
 
-This differs from the placeholder shape in `BUILD_BIBLE.md` Section 3 (Phase
-4); see `SCHEMA_NOTES.md` for the field-by-field diff. ComplyForge's
+This is the verified schema from the upstream binary's loader; see
+`SCHEMA_NOTES.md` for the field-by-field diff vs. an earlier
+placeholder shape and the upstream source files reviewed
+(`internal/policy/types.go`, `internal/policy/loader.go`). ComplyForge's
 PolicyAgent emits the real shape, and `backend/tests/test_policy_generator.py`
-asserts against it (87/87 tests green).
+asserts against it.
 
 ## How the webhook bridge connects everything
 
@@ -152,7 +154,7 @@ ComplyForge integrates Veea Lobster Trap under the MIT License
 (`src/README.md` § License). Source clone is preserved as-is in `src/`.
 
 
-## Phase 10: deploying per-agent policies
+## the deploy step: deploying per-agent policies
 
 ComplyForge's backend exposes `POST /api/deploy-policy/{agent_slug}` which
 writes the agent's generated YAML to:
@@ -176,7 +178,7 @@ The endpoint returns:
 
 ### Why `manual_restart_required`?
 
-Verified against the cloned upstream source during Phase 7 / Phase 10:
+Verified against the cloned upstream source during the Lobster Trap integration step / the deploy step:
 
 | Reload mechanism | Status in the upstream binary |
 | --- | --- |
@@ -200,4 +202,4 @@ multiple agents simultaneously you can either:
 
 A policy-merger CLI is intentionally out of scope for the hackathon; the
 generated per-agent files are kept for inspection by Veea engineers and for
-the Phase 10 demo flow.
+the the deploy step demo flow.

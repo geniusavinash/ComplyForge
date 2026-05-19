@@ -1,4 +1,4 @@
-# Phase 7 deliverable: sample HIGH_RISK ResumeRanker policy emitted by ComplyForge backend/scripts/print_sample_policy.py (mocked Gemini, real Lobster Trap schema).
+# upstream deliverable: sample HIGH_RISK ResumeRanker policy emitted by ComplyForge backend/scripts/print_sample_policy.py (mocked Gemini, real Lobster Trap schema).
 version: '1.0'
 policy_name: complyforge-resumeranker
 default_action: ALLOW

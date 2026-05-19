@@ -153,7 +153,7 @@ Run locally — see README Quick Start. No hosted instance (deliberate: every de
 
 Tick every box before final submit:
 
-- [x] All 94 unit tests + 7 endpoint tests pass
+- [x] All 116 backend tests pass (planner 6, critic 6, classifier 8, doc 10, policy 14, pdf 7, orchestrator 11, gemini 8, api 23, taxonomy 12, sample data 11)
 - [x] Frontend builds clean
 - [x] Lobster Trap binary builds and inspects policies correctly
 - [x] At least 1 sample agent (RecipeBuddy or ResumeRanker) analyzed end-to-end against live Gemini

@@ -113,29 +113,29 @@ Gemini and Veea Lobster Trap on the side.
 Solo build, sponsor-native, real engineering honesty.
 
 ### Body bullets
-- Full pytest suite green; opt-in end-to-end test runs against live services.
+- 116 passing backend tests across eleven test files; one opt-in end-to-end test runs against live services.
 - Verified Veea Lobster Trap schema by reading the binary's source; patched our PolicyAgent in one centralised helper and documented every field.
 - Lobster Trap binary has no hot reload; we surface `manual_restart_required` in the API response rather than fake one.
 - Multimodal input: drop a model card PDF or a system-architecture PNG and Gemini Vision extracts the descriptor for you.
-- Five specialised sub-agents, fan-in / fan-out only — every decision routes through the Orchestrator's shared context.
+- Five specialised sub-agents (Planner, Classifier, Critic, Doc, Policy), fan-in / fan-out only — every decision routes through the Orchestrator's shared context.
 
 ### Speaker notes
 Two things matter here. First, every claim on this slide is on disk. We
-have 94 passing tests today: 87 unit tests plus 7 new endpoint tests for
-the deploy-policy and inventory-zip endpoints, with one end-to-end test
-that is opt-in via the e2e marker. Second, we have not faked anything we
-could not verify. The Veea Lobster Trap policy schema in our brief turned
-out to differ from the real binary's loader. We read serve.go and the
-loader, patched our PolicyAgent in one centralised helper, and shipped a
-diff document. The same binary has no reload mechanism. We tell the
-operator that, with the policy file path, instead of inventing a flag.
+have 116 passing tests today across eleven test files, plus one
+end-to-end test that is opt-in via the e2e marker. Second, we have not
+faked anything we could not verify. The Veea Lobster Trap policy schema
+in our initial design turned out to differ from the real binary's loader.
+We read serve.go and the loader, patched our PolicyAgent in one
+centralised helper, and shipped a diff document. The same binary has no
+reload mechanism. We tell the operator that, with the policy file path,
+instead of inventing a flag.
 
 ### Visual
-Two-column layout. Left column: a small stat card grid — "94 tests
-passing", "5 enterprise agents seeded", "8 attack payloads", "Schema diff
-patched in 2 hours", each in `bg-panel` with the `accent` color number.
-Right column: a soft `border-soft` callout with the line **"We will not
-fake what we cannot verify."** in `text-main`, centred.
+Two-column layout. Left column: a small stat card grid — "116 tests
+passing", "5 sub-agents", "5 enterprise agents seeded", "8 attack
+payloads", each in `bg-panel` with the `accent` color number. Right
+column: a soft `border-soft` callout with the line **"We will not fake
+what we cannot verify."** in `text-main`, centred.
 
 ---
 

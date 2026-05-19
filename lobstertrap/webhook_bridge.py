@@ -4,7 +4,7 @@ Tails Veea Lobster Trap audit events and relays each one to the ComplyForge
 backend at POST /api/enforcement/event so the dashboard's live enforcement
 log gets populated.
 
-Lobster Trap (verified by clone in Phase 7) emits one event two ways:
+Lobster Trap (verified by clone during the build) emits one event two ways:
 
   1. JSONL audit log written by `internal/audit/logger.go` — to stderr by
      default, or to a file when serve --audit-log <path> is set.

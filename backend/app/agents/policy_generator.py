@@ -1,7 +1,7 @@
 """PolicyAgent — generates Veea Lobster Trap YAML policies from a tiered
 classification.
 
-Single async Gemini call per policy (BUILD_BIBLE Section 0 / Phase 4): the
+Single async Gemini call per policy (the locked architecture): the
 rule skeleton is hard-coded per tier and Gemini only fills in the
 human-readable `description` strings, naming specific EU AI Act Article
 numbers drawn from `classification.triggered_articles`. We never fan out
@@ -9,7 +9,7 @@ per-rule and never invent actions outside the documented Lobster Trap
 vocabulary.
 
 Schema reference: github.com/veeainc/lobstertrap (cloned and inspected during
-Phase 7). The real schema differs from the BUILD_BIBLE shape; this module
+the build step). The real schema differs from the the initial design shape; this module
 emits the real schema:
 
     version: "1.0"
@@ -30,7 +30,7 @@ emits the real schema:
             negate: <optional bool>
     egress_rules: [...same shape...]
 
-Per-tier rule counts are preserved from the BUILD_BIBLE plan
+Per-tier rule counts are preserved from the the architecture plan
 (1 / 5 / 2 / 1). Field names below match the real Go loader
 (`internal/policy/types.go`).
 """
@@ -102,7 +102,7 @@ def _rule(
 
     The Go loader requires `name` non-empty, `action` in the valid set, and
     at least one condition. Higher `priority` = evaluated first (firewall
-    style, opposite of the BUILD_BIBLE assumption).
+    style, opposite of the the initial design assumption).
     """
     rule: dict[str, Any] = {
         "name": name,
@@ -155,7 +155,7 @@ def _prohibited_skeleton(
 def _high_risk_skeleton() -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     """Five rules total: three ingress + two egress.
 
-    Mapping vs. BUILD_BIBLE intent:
+    Mapping vs. the design intent:
       ingress:
         prompt_injection_block      (Article 15 cybersecurity)
         decision_without_oversight  (Article 14 human oversight)

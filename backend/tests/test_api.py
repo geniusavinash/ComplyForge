@@ -3,7 +3,7 @@
 Test client choice: Starlette's `TestClient` (a thin sync wrapper around
 httpx). It cleanly supports `client.stream(...)` for the SSE endpoint and
 sidesteps any `pytest-asyncio` event-loop / `httpx.ASGITransport` plumbing
-the Phase 5 spec leaves up to us.
+the architecture spec leaves up to us.
 
 Orchestrator dependency is overridden via `app.dependency_overrides`. No real
 Gemini calls are ever made.
@@ -162,9 +162,18 @@ def test_root_returns_expected_shape(client: TestClient) -> None:
     assert response.status_code == 200
     body = response.json()
     assert body["name"] == "ComplyForge"
-    assert body["version"] == "0.1.0"
+    assert body["version"] == "0.3.0"
     assert body["status"] == "ready"
-    assert body["agents"] == ["classifier", "doc_agent", "policy_agent"]
+    assert body["agents"] == [
+        "planner",
+        "classifier",
+        "critic",
+        "doc_agent",
+        "policy_agent",
+    ]
+    assert "capabilities" in body
+    assert "multi_agent_pipeline" in body["capabilities"]
+    assert "multimodal_input" in body["capabilities"]
 
 
 # ---------------------------------------------------------------------------
@@ -191,7 +200,7 @@ def test_get_sample_agents_returns_list(client: TestClient) -> None:
     assert response.status_code == 200
     body = response.json()
     assert isinstance(body, list)
-    # Phase 5 doesn't ship sample_agents.json yet — empty list is acceptable.
+    # the build step doesn't ship sample_agents.json yet — empty list is acceptable.
 
 
 # ---------------------------------------------------------------------------
@@ -305,7 +314,7 @@ def test_analyze_stream_emits_done_event(client: TestClient) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Phase 10: POST /api/deploy-policy/{agent_slug}
+# the build step: POST /api/deploy-policy/{agent_slug}
 # ---------------------------------------------------------------------------
 _REAL_LOBSTERTRAP_YAML = """\
 version: "1.0"
@@ -425,7 +434,7 @@ def test_deploy_policy_returns_400_for_non_mapping_yaml(client: TestClient) -> N
 
 
 # ---------------------------------------------------------------------------
-# Phase 10: GET /api/inventory/zip
+# the build step: GET /api/inventory/zip
 # ---------------------------------------------------------------------------
 import zipfile  # noqa: E402  (local import keeps top of file unchanged)
 from io import BytesIO  # noqa: E402

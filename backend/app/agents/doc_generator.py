@@ -1,6 +1,6 @@
 """DocAgent — generates the Article 11 technical file via concurrent Gemini calls.
 
-Concurrency contract (BUILD_BIBLE Section 0 / Phase 3):
+Concurrency contract (the locked architecture):
   All 9 Article 11 sections are generated in parallel via `asyncio.gather`.
   For HIGH_RISK agents the FRIA narrative is gathered alongside, giving 10
   concurrent Gemini calls. This is the only concurrent expansion in the

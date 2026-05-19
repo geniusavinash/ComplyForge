@@ -1,14 +1,14 @@
 #requires -Version 5.1
 <#
 .SYNOPSIS
-    ComplyForge Phase 7 setup: clone Veea Lobster Trap, build the binary, verify.
+    ComplyForge the build step setup: clone Veea Lobster Trap, build the binary, verify.
 
 .DESCRIPTION
     Clones github.com/veeainc/lobstertrap into ./src (if missing), reads its
     real layout, and builds bin\lobstertrap.exe. Fails loud with actionable
     next steps if git or go are missing — never silently fakes a binary.
 
-    Schema and CLI flags inspected by Phase 7 are recorded in
+    Schema and CLI flags inspected by the build step are recorded in
     ./SCHEMA_NOTES.md.
 #>
 
@@ -95,9 +95,9 @@ if (-not (Test-Path -LiteralPath $readme)) {
     Write-Host "[warn] README.md not found under $SrcDir; continuing with default build path." -ForegroundColor Yellow
 }
 
-# Phase 7 inspection (verified during clone): the canonical entrypoint lives
+# upstream inspection (verified during clone): the canonical entrypoint lives
 # at src/main.go (`package main`); there is NO src/cmd/lobstertrap subpackage.
-# Try the BUILD_BIBLE-suggested path first for forward-compat, then fall back
+# Try the the architecture spec-suggested path first for forward-compat, then fall back
 # to the real build target documented in the repo's Makefile.
 $cmdMain = Join-Path $SrcDir 'cmd\lobstertrap'
 

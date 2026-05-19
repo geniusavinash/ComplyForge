@@ -1,8 +1,8 @@
 # ComplyForge — Architecture
 
-> Single-page architecture explainer. Read this alongside
-> `BUILD_BIBLE.md` Section 0 (architecture decisions) and Section 3
-> (per-phase build log).
+> Single-page architecture explainer. Read this alongside `README.md`
+> (project overview), `CONTRIBUTING.md` (locked architecture rules),
+> and `lobstertrap/SCHEMA_NOTES.md` (real Veea schema diff).
 
 ## At a glance
 
@@ -71,28 +71,36 @@ trace. The pipeline runs end-to-end in a few seconds for HIGH_RISK agents.
         └──────────────────────────────────────────────────────────┘
 ```
 
-## Why one orchestrator and three sub-agents
+## Why one orchestrator and five sub-agents
 
 The architecture is locked. Three points pin it down:
 
 1. **Empirical error amplification.** Tran and Kiela (2024, "Multi-agent
    LLM Pipelines: Error Compounding under Realistic Workloads") report
-   roughly 17× higher final-task error rates for 5-to-7 agent meshes vs.
-   structured small-team pipelines on long-horizon synthesis tasks. The
-   compounding kicks in around five agents in series. ComplyForge's three
-   sub-agents share a single classification context and never call each
-   other directly, so the dependency graph is a fan-out, not a chain.
+   roughly 17× higher final-task error rates for sequential agent
+   *chains* — where each agent's output feeds the next agent's input
+   without a coordinator — vs. structured small-team pipelines on
+   long-horizon synthesis tasks. The compounding kicks in when agents
+   read each other's outputs directly. ComplyForge's five sub-agents
+   share a single classification context owned by the Orchestrator and
+   never call each other directly, so the dependency graph is a fan-in
+   / fan-out, not a chain.
 
 2. **Industry signal.** Gartner's 2026 Hype Cycle for AI placed
    "self-organising multi-agent systems" in the Trough of
    Disillusionment. Buyers are explicitly asking for fewer, more
-   accountable agents. ComplyForge's pitch deck leans on that.
+   accountable agents. ComplyForge's pitch deck leans on that — every
+   step is explicitly emitted as an SSE event and routed through the
+   Orchestrator, so an operator can audit which agent produced what.
 
-3. **Maintainability for a solo build.** Three agents fit in three test
-   files. The single-Gemini-call invariant per agent is asserted in tests
+3. **Maintainability for a solo build.** Five sub-agents map to five
+   small test files (`test_planner`, `test_classifier`, `test_critic`,
+   `test_doc_generator`, `test_policy_generator`). The
+   single-Gemini-call invariant per agent is asserted in tests
    (`test_classify_makes_exactly_one_gemini_call`,
-   `test_generate_makes_exactly_one_gemini_call_per_tier`). Drift is
-   visible.
+   `test_generate_makes_exactly_one_gemini_call_per_tier`,
+   `test_planner_makes_exactly_one_gemini_call`,
+   `test_critic_makes_exactly_one_gemini_call`). Drift is visible.
 
 ## Concurrency
 
@@ -126,8 +134,8 @@ funnels it through `useInventory.upsertReport`.
 
 ## Veea Lobster Trap integration
 
-The upstream binary's policy schema differs from the BUILD_BIBLE
-placeholder. ComplyForge discovered this in Phase 7 by cloning
+The upstream binary's policy schema differs from the initial design
+assumption. ComplyForge discovered this by cloning
 `github.com/veeainc/lobstertrap`, reading
 `internal/policy/types.go`/`loader.go`, and patching `policy_generator.py`
 in place. The full diff is in `lobstertrap/SCHEMA_NOTES.md`. Highlights:
@@ -200,27 +208,33 @@ complyforge/
 │   ├── ARCHITECTURE.md             This file
 │   └── EU_AI_ACT_MAPPING.md        Article-by-article cross-reference
 ├── backend/
-│   ├── main.py                     FastAPI app entry
+│   ├── main.py                     FastAPI app entry (v0.3.0)
 │   ├── pytest.ini                  Markers + addopts (e2e opt-in)
 │   ├── requirements.txt
 │   ├── .env.example
 │   ├── app/
-│   │   ├── agents/                 ClassifierAgent · DocAgent ·
-│   │   │                            PolicyAgent · ComplianceOrchestrator
+│   │   ├── agents/                 PlannerAgent · ClassifierAgent ·
+│   │   │                            CriticAgent · DocAgent · PolicyAgent
+│   │   │                            · ComplianceOrchestrator
 │   │   ├── data/                   Taxonomy · sample agents · attacks
-│   │   ├── routers/                analyze.py · enforcement.py
-│   │   ├── services/               gemini_client.py · pdf_generator.py
-│   │   ├── config.py · schemas.py
+│   │   ├── routers/                analyze.py (includes /api/extract-
+│   │   │                            descriptor multimodal endpoint) ·
+│   │   │                            enforcement.py
+│   │   ├── services/               gemini_client.py (build_gemini_schema
+│   │   │                            sanitizer) · pdf_generator.py
+│   │   ├── config.py · schemas.py (ExecutionPlan · CriticReview · …)
 │   ├── scripts/                    seed_inventory.py + helpers
-│   └── tests/                      94 unit + 7 endpoint + 1 opt-in e2e
+│   └── tests/                      116 passing tests + 1 opt-in e2e
 ├── frontend/
 │   ├── index.html · vite.config.js · tailwind.config.js
 │   └── src/
-│       ├── api/client.js           streamAnalyze + REST helpers
+│       ├── api/client.js           streamAnalyze + extractDescriptor
 │       ├── store/                  zustand (inventory, toasts)
 │       ├── components/             Layout · RiskBadge · ActionChip ·
-│       │                            StepProgress · Toaster
-│       ├── views/                  Dashboard · NewAnalysis ·
+│       │                            StepProgress · PlanPreview ·
+│       │                            ReasoningTrace · Toaster
+│       ├── views/                  Dashboard · NewAnalysis (3 input
+│       │                            tabs: sample / JSON / image-PDF) ·
 │       │                            InventoryView · RiskHeatmap ·
 │       │                            DocsLibrary · EnforcementLog
 │       └── lib/                    enforcement countdown · palette · format

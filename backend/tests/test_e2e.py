@@ -1,4 +1,4 @@
-"""Phase 10 end-to-end integration test.
+"""the build step end-to-end integration test.
 
 Marked @pytest.mark.e2e and excluded from the default pytest run via the
 addopts in pytest.ini. To run explicitly:
@@ -121,7 +121,7 @@ def _check_prereqs() -> None:
     if not _port_free(_LOBSTER_PORT):
         missing.append(f"local TCP port {_LOBSTER_PORT} (lobstertrap) is in use")
     if missing:
-        pytest.skip("Phase 10 e2e prerequisites missing: " + "; ".join(missing))
+        pytest.skip("the build step e2e prerequisites missing: " + "; ".join(missing))
 
 
 def _attack_payload() -> dict:

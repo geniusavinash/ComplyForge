@@ -1,6 +1,6 @@
-# Phase 7 — Lobster Trap reality-check log + schema diff
+# the Lobster Trap integration step — Lobster Trap reality-check log + schema diff
 
-This document is the ground-truth record for Phase 7. Re-read it before
+This document is the ground-truth record for the Lobster Trap integration step. Re-read it before
 trusting any claim about what ComplyForge integrates with.
 
 ## Reality Check 1 — repo reachability
@@ -31,13 +31,13 @@ classic injection payload. Definition of Done item "binary exists and runs
 ## Reality Check 3 — schema confirmed?
 
 **Outcome:** CONFIRMED. The real schema differs materially from the
-BUILD_BIBLE shape. Source of truth: `src/internal/policy/types.go`,
-`src/internal/policy/loader.go`, `src/configs/default_policy.yaml`,
-`src/README.md`, and `src/claude.md`.
+initial design placeholder. Source of truth in the cloned upstream:
+`src/internal/policy/types.go`, `src/internal/policy/loader.go`,
+`src/configs/default_policy.yaml`, and `src/README.md`.
 
 ### Field-by-field diff
 
-| BUILD_BIBLE (Phase 4 placeholder) | Real Lobster Trap | Notes |
+| Initial placeholder shape | Real Lobster Trap | Notes |
 | --- | --- | --- |
 | `name: <policy>` | `policy_name: <policy>` | Top-level policy name. |
 | `version: 1` (int) | `version: "1.0"` (string) | Loader rejects empty / numeric. |
@@ -64,7 +64,7 @@ DENY), high-risk (3 ingress + 2 egress = 5), limited-risk (2 egress),
 minimal-risk (1 ingress LOG). The only thing that moved is which list each
 rule lives in.
 
-## Was the YAML in this folder BUILD_BIBLE-shape or real-shape?
+## Is the YAML in this folder placeholder-shape or real-shape?
 
 **Real-shape.** Both `policies/default.yaml` and
 `policies/example_high_risk.yaml` use `policy_name`, `version: "1.0"`,
@@ -73,10 +73,10 @@ split `ingress_rules` / `egress_rules`, `name`/`description`/`priority`/
 through the real Go loader (`bin\lobstertrap.exe inspect --policy <file>`
 returned exit 0 for each).
 
-## Did Phase 7 patch the backend?
+## Did the Lobster Trap integration step patch the backend?
 
 **Yes — minimally.** The schema confirmation triggered the patch rule in
-the Phase 7 brief:
+the the Lobster Trap integration step brief:
 
 * `backend/app/agents/policy_generator.py` — emits the real schema (split
   `ingress_rules`/`egress_rules`, `policy_name`, `version: "1.0"`,
@@ -107,13 +107,13 @@ work unchanged because PolicyAgent's public surface (`generate(...)
 
 `python -m pytest tests/ -v` from `backend/`: **87 passed, 50 warnings in
 1.55s**, exit 0. The two extra tests are net-new real-schema guards. The
-original 85 tests from Phase 6 all still pass.
+original 85 tests from an earlier milestone all still pass.
 
 ## What was NOT done
 
-* No GUI dashboard wiring — that is Phase 8/9 frontend work.
+* No GUI dashboard wiring — that is the frontend dashboard work.
 * No live regression of `webhook_bridge.py` against a running proxy +
-  backend pair (that is a manual demo step, not a Phase 7 deliverable).
+  backend pair (that is a manual demo step, not a the Lobster Trap integration step deliverable).
   The script is syntax-clean (`python -m py_compile`) and its event-source
   abstractions are based on the real `internal/dashboard/handler.go`
   (`/_lobstertrap/api/events`) and `internal/audit/logger.go` (JSONL audit

@@ -1,7 +1,7 @@
-"""Tests for the Phase 6 demo data: sample agents + attack payloads.
+"""Tests for the the build step demo data: sample agents + attack payloads.
 
 These tests are pure data-shape checks — no Gemini calls, no live backend.
-They guard the contract that Phase 7 (Lobster Trap) and the demo narrative
+They guard the contract that the build step (Lobster Trap) and the demo narrative
 rely on:
   * 5 sample AgentDescriptors covering all four EU AI Act risk tiers by intent.
   * 8 attack payloads with valid Article references, kebab-case ids,

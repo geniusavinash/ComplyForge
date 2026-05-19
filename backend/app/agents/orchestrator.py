@@ -1,6 +1,6 @@
 """ComplianceOrchestrator — pure conductor for the sub-agents.
 
-Per BUILD_BIBLE Section 0 / Phase 5, with v0.3.0 upgrade for the AI Agent
+Per the locked architecture, with v0.3.0 upgrade for the AI Agent
 Olympics tracks (Agentic Workflows + Intelligent Reasoning):
 
   * Step 0 (optional, v0.3.0): PlannerAgent.plan(agent) — commits to a DAG

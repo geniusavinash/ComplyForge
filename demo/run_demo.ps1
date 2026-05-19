@@ -1,7 +1,7 @@
 #requires -Version 5.1
 <#
 .SYNOPSIS
-    ComplyForge Phase 10 demo launcher.
+    ComplyForge the build step demo launcher.
 
 .DESCRIPTION
     Boots the four ComplyForge services in dependency order, waits for

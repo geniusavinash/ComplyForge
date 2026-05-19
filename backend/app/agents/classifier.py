@@ -2,8 +2,8 @@
 an EU AI Act risk tier (Prohibited / High-Risk / Limited / Minimal).
 
 Architecture note: this is ONE call per agent. Parallelism is reserved for
-Phase 3 (asyncio.gather across Article 11 sections) and Phase 5 (Orchestrator
-runs DocAgent and PolicyAgent concurrently). See BUILD_BIBLE Section 0.
+the build step (asyncio.gather across Article 11 sections) and the build step (Orchestrator
+runs DocAgent and PolicyAgent concurrently). See the locked architecture.
 
 Post-processing:
   * triggered_articles is filtered against the closed set of citations the
@@ -152,7 +152,7 @@ def _filter_citations(citations: Iterable[str]) -> list[str]:
 
 _PRECAUTION_NOTE = (
     " [Precautionary principle: model confidence below 0.5; defaulted to "
-    "HIGH_RISK pending human review per BUILD_BIBLE Section 3 / Phase 2.]"
+    "HIGH_RISK pending human review per the architecture spec.]"
 )
 
 

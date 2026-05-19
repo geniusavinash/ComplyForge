@@ -3,8 +3,8 @@
 All Gemini calls mocked via unittest.mock.AsyncMock — no live API hits.
 
 Real Lobster Trap schema (cloned from github.com/veeainc/lobstertrap during
-Phase 7) is the reference. Per-tier rule counts (1 / 5 / 2 / 1) are preserved
-from the BUILD_BIBLE plan; field names match the Go loader.
+the build step) is the reference. Per-tier rule counts (1 / 5 / 2 / 1) are preserved
+from the the architecture plan; field names match the Go loader.
 """
 
 from __future__ import annotations

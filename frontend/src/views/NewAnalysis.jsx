@@ -744,7 +744,7 @@ function PolicyCard({ report }) {
       const status = err?.response?.status
       if (status === 404 || status === 405) {
         toast.warn(
-          'Phase 10 wiring pending — policy YAML available in panel below.',
+          'Deploy endpoint unavailable — copy the policy YAML from the panel below and load it manually.',
         )
       } else {
         toast.error(`Deploy failed: ${err?.message || 'unknown error'}`)

@@ -41,7 +41,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["analyze"])
 
 # `generated_pdfs/` lives under `backend/`; routes resolve from CWD because
-# uvicorn is launched from `backend/` per the BUILD_BIBLE Phase 5 contract.
+# uvicorn is launched from `backend/` per the the architecture spec contract.
 PDF_DIR = Path("generated_pdfs")
 SAMPLE_AGENTS_PATH = (
     Path(__file__).resolve().parent.parent / "data" / "sample_agents.json"
@@ -242,7 +242,7 @@ async def extract_descriptor(file: UploadFile = File(...)) -> JSONResponse:
 
 
 # ---------------------------------------------------------------------------
-# Phase 10: deploy a generated policy to Lobster Trap
+# the build step: deploy a generated policy to Lobster Trap
 # ---------------------------------------------------------------------------
 class DeployPolicyRequest(BaseModel):
     """Optional override for the policy YAML.
@@ -300,7 +300,7 @@ async def deploy_policy(
       * Output: `<policy_dir>/<slug>.yaml`. The Lobster Trap binary loads
         policies once at startup and does not currently expose a reload
         mechanism (no SIGHUP, no admin endpoint, no file watcher — verified
-        in `lobstertrap/src/cmd/serve.go` during Phase 7). The response
+        in `lobstertrap/src/cmd/serve.go` during the integration step). The response
         therefore reports `reload_method: "manual_restart_required"` so
         callers can surface the truth honestly.
     """
@@ -382,7 +382,7 @@ async def deploy_policy(
 
 
 # ---------------------------------------------------------------------------
-# Phase 10: bulk inventory ZIP
+# the build step: bulk inventory ZIP
 # ---------------------------------------------------------------------------
 @router.get("/inventory/zip")
 async def inventory_zip(
