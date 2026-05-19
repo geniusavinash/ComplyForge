@@ -98,9 +98,11 @@ Visit http://localhost:5173 — pick a sample agent (ResumeRanker, EmotionPulse,
 
 ## Tests
 
-- **94 unit tests + 7 endpoint tests passing** — `cd backend; pytest tests/ -v -m "not e2e"`
-- **1 opt-in end-to-end integration test** — `pytest tests/ -v -m e2e` (requires live services)
+- **116 passing tests** — `cd backend; pytest tests/ -v -m "not e2e"`
+  - Breakdown: classifier 8, doc_generator 10, gemini_client 8, orchestrator 11, pdf_generator 7, planner 6, critic 6, policy_generator 14, sample_data 11, taxonomy 12, api 23.
+- **1 opt-in end-to-end integration test** — `pytest tests/ -v -m e2e` (requires live services).
 - Concurrency proof — 10 mocked Gemini calls finish in 0.11s vs ~1.0s sequential.
+- Backwards-compatible orchestrator: default constructor with no Planner/Critic injection keeps the v0.2.0 SSE event sequence so the original test suite stays green.
 
 ## Demo Materials
 
@@ -113,12 +115,42 @@ Visit http://localhost:5173 — pick a sample agent (ResumeRanker, EmotionPulse,
 
 ```
 complyforge/
-├── backend/         FastAPI + Gemini orchestrator + 3 sub-agents
-├── frontend/        React + Tailwind autonomous-agent dashboard
-├── lobstertrap/     Veea Lobster Trap config + policies
-├── demo/            Pitch deck, video script, attack scenarios
-├── docs/            Architecture, EU AI Act mapping
-└── scripts/         Preflight + seed scripts
+├── backend/
+│   ├── main.py                          FastAPI app (v0.3.0)
+│   ├── app/
+│   │   ├── agents/
+│   │   │   ├── orchestrator.py          state owner; emits SSE pipeline
+│   │   │   ├── planner.py               PlannerAgent → ExecutionPlan
+│   │   │   ├── classifier.py            ClassifierAgent → risk tier
+│   │   │   ├── critic.py                CriticAgent → second-opinion
+│   │   │   ├── doc_generator.py         DocAgent → Article 11 + FRIA
+│   │   │   └── policy_generator.py      PolicyAgent → Lobster Trap YAML
+│   │   ├── services/
+│   │   │   ├── gemini_client.py         async wrapper + schema sanitizer
+│   │   │   └── pdf_generator.py         ReportLab regulator PDF
+│   │   ├── routers/
+│   │   │   ├── analyze.py               /api/analyze + /api/analyze/stream
+│   │   │   │                            + /api/extract-descriptor (multimodal)
+│   │   │   │                            + /api/deploy-policy + /api/pdf
+│   │   │   └── enforcement.py           /api/enforcement/event + /events
+│   │   ├── data/                        EU AI Act taxonomy + sample agents
+│   │   └── schemas.py                   Pydantic v2 models
+│   └── tests/                           116 passing tests
+├── frontend/
+│   ├── src/
+│   │   ├── views/                       Dashboard, NewAnalysis, Inventory,
+│   │   │                                RiskHeatmap, DocsLibrary, EnforcementLog
+│   │   ├── components/                  RiskBadge, ActionChip, StepProgress,
+│   │   │                                PlanPreview, ReasoningTrace, Toaster
+│   │   ├── api/client.js                axios + manual SSE parser + multimodal
+│   │   └── store/inventory.js           zustand (deriveStats with critic + plan)
+│   └── tailwind.config.js               locked brand palette
+├── lobstertrap/                         Veea Lobster Trap configs + setup
+├── demo/                                Pitch deck PDF, cover image, video
+│                                        script, attack scenarios, judge Q&A
+├── docs/                                Architecture, EU AI Act mapping
+├── scripts/                             Preflight, seed, PDF/cover builders
+└── SUBMISSION_PACKAGE.md                lablab.ai copy-paste content
 ```
 
 ## License
